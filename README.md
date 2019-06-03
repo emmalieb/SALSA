@@ -1,2 +1,2 @@
-# SALSA
-Solar Applied Planetary Dataset Calibration
+# SALSA - Solar Applied pLanetary dataSet cAlibration
+

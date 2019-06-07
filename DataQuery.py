@@ -3,11 +3,10 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from astropy.units import second
-from _pylief import NONE
+import Main
 
 """
-    Author: Emma P. Lieb
+    Author: Emma Lieb
     
     This function allows the user to get a URL specified by input parameters that can be used to query solar data. 
     
@@ -155,14 +154,3 @@ def plotDataFromURL(data):
     #plot solar data
     subdf.plot(x="wavelength",y="irradiance", title="Solar Spectrum", color='m')
     plt.show()
-
-#WANT TO NOT USE A MAIN IN EACH FILE, WANT A UNIVERSAL USER PROMPT FILLED MAIN TO CALL MY FUNCTIONS FROM ONE PLACE
-# if __name__ == '__main__':
-#    
-#     url = getURL('irradiance','wavelength', None, None, 180, 300, '2010-03-20', '2010-03-24')
-#    
-#     print(url)
-#     
-#     data = requests.get(url).json() 
-#     
-#     plottingData = plotDataFromURL(data)

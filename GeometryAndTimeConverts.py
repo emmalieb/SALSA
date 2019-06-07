@@ -1,6 +1,10 @@
 import spiceypy as spice
 import numpy as np
 import pandas as pd
+import importlib
+import Main
+from GetKernels import *
+
 
 """ AUTHOR: Emma Lieb
     
@@ -161,10 +165,5 @@ def getVectorFromTargetToSun(ET, target):
     
     #unload kernels
     spice.unload(metakernel)
-
-#WANT TO NOT USE A MAIN IN EACH FILE, WANT A UNIVERSAL USER PROMPT FILLED MAIN TO CALL MY FUNCTIONS FROM ONE PLACE
-# if __name__ == '__main__':
-#     #get meta kernel for all these functions, TODO: figure out how to tie that script to this one and tie both to 'user input' file
-#     
-    
+  
     

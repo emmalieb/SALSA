@@ -71,29 +71,32 @@ def getKernels(target, functionName):
     #print what is in the kernels directory
     ftp.retrlines('LIST') 
     
-    #find needed kernals
-    #GOING TO USE IF STATEMENTS WITH FUNCTION NAMES FOR WHAT KERNALS TO GET - GOTTA PASS IN FUNCTIN NAMES
+    #find needed kernels based on function calling for them
     if functionName is 'UTC2ET':
         path_vals = 'kernels/lsk'
         ftp.cwd('LSK')
         #get kernel filenames
         kernels = ftp.retrlines('RETR filename')
         #load the kernels from here into metakernel
-        writeMetaKernel(path_vals, kernels, functionName)
+        writeMetaKernel(path_vals, kernels, functionName, mission)
         
-    if functionName is 'SCLK2ET':
-        path_vals = 'kernels/lsk', 'kernels/sclk'
+    elif functionName is 'SCLK2ET':
+        path_vals = "'kernels/lsk', 'kernels/sclk'"
         ftp.cwd('LSK')
-        #load the kernels from here into metakernel
-        #TO DO: GET THE RIGHT KERNELS IN THIS DIRECTORY
-        
+        #get kernel filenames
+        kernels = ftp.retrlines('RETR filename')
         #back out of LSK directory and go into sclk directory
-        writeMetaKernel(kernels, functionName)
+        ftp.cwd('cd ..')
+        ftp.cwd('SCLK')
+        #get kernel filenames
+        kernels = kernels+ftp.retrlines('RETR filename')
+        #load the kernels from here into metakernel
+        writeMetaKernel(path_vals, kernels, functionName, mission)
+
     #say goodbye
     ftp.quit()
     
-def writeMetaKernel(kernels, functionName, mission):
-    kernelDscr = kernelDescriptions(kernels, mission)
+def writeMetaKernel(path_vals, kernels, functionName, mission):
     #open file according to functionName 
     mode = 'w'
     filename = functionName.toUpper()
@@ -101,12 +104,22 @@ def writeMetaKernel(kernels, functionName, mission):
     #write header
     mkfile.write('\begintext')
     mkfile.write('The names and contents of the kernels referenced by this meta-kernel are as follows:')
+    #get descriptions of kernels for meta kernel
+    kernelDscr = kernelDescriptions(kernels, mission)
     #Write kernel descriptions
     mkfile.write('FILE NAME'+"    "+"CONTENTS")
-    mkfile.write(kernels + "    "+kernelDscr)
+    mkfile.write(kernels+ "    "+kernelDscr)
+    #oepn data block
+    mkfile.write('\begindata')
+    #write path values
+    mkfile.write('PATH_VALUES = '+ '('+path_vals+')')
+    #write KERNELS TO LOAD
+    mkfile.write('KERNELS_TO_LOAD = '+'('+kernels+')')
+    #enddata block
+    mkfile.write('\begintext')
+    #say goodbye
+    mkfile.close()
     
-    #write KERNELS TO LOAD 
-    #close file
 def kernelDescriptions(kernels, mission):
     kernelDscr = ''
     for kernel in kernels:

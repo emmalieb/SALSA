@@ -91,7 +91,7 @@ def getKernels(target,  functionName):
 def makeMetaKernel(kernels):
     #To do 
 
-#NOT SURE HOW A MAIN WILL WORK FOR MY VARIOUS FILES OF FUNCTIONS, KIND OF WANT ONE MAIN FOR THE ALL THE FUNCTIONS WHERE THAT IS THE USER PROMPTS 
+#WANT TO NOT USE A MAIN IN EACH FILE, WANT A UNIVERSAL USER PROMPT FILLED MAIN TO CALL MY FUNCTIONS FROM ONE PLACE
 # if __name__ == '__main__':
 #     
 #     mission = getMissionFromTarget('Saturn')

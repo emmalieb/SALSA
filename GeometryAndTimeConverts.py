@@ -7,37 +7,6 @@ import pandas as pd
     This file contains functions for converting user inputed time into ephemeris seconds 
     and computes all necessary geometry to be used for spectra convolutions
 """
-'''Function to get mission name from target object name 
-    Parameters:  
-    target - user input
-'''
-def getMissionFromTarget(target):
-    
-    mission = ''
-    
-    if target is 'mercury' or target is 'Mercury':
-        mission = 'MESSENGER'
-    
-    elif target is 'venus' or target is 'Venus':
-        mission = 'VEGA'
-        
-    elif target is 'mars' or target is 'Mars':
-        mission = 'MAVEN'
-    
-    elif target is 'jupiter' or target is 'Jupiter':
-        mission = 'JUNO'
-    
-    elif target is 'saturn' or target is 'Saturn':
-        mission = 'CASSINI'
-    
-    elif target is 'pluto' or target is 'Pluto':
-        mission = 'NEWHORIZONS'
-    
-    elif target is 'moon' or target is'Moon':
-        mission = 'LUNARORBITER'
-        
-    return mission
-
 #****************************TIME CONVERSION FUNCTIONS**********************************
 '''Function to convert UTC time into ephemeris seconds since J2000
     Parameters:  
@@ -47,7 +16,7 @@ def getMissionFromTarget(target):
 def UTC2ET(time, target):
     #converting from UTC time to ephemeris seconds since J2000 -- need leapseconds kernel -- 'kernels/lsk/naif0008.tls'
     #get mission named from target
-    mission = getMissionFromTarget(target)
+    mission = getMissionFromTarget(target) #TO DO: figure out classes and how to get this functions available to these functions
     #get metakernel
     metakernel = getKernels(mission, 'UTC2ET') #TO DO: figure out classes and how to get those kernel functions available to these functions
     #load kernels from metakernel
@@ -65,10 +34,10 @@ def UTC2ET(time, target):
     time - user input
     target - user input
 '''
-def SCLK2ET(time target):
+def SCLK2ET(time, target):
     #converting from space craft clock time string to ephemeris seconds since J2000 -- need leapseconds kernel and SCLK file for UTC time -'kernels/lsk/naif0008.tls','kernels/sclk/cas00084.tsc'
     #get mission name from target
-    mission = getMissionFromTarget(target)
+    mission = getMissionFromTarget(target) #TO DO: figure out classes and how to get this functions available to these functions
     #get metakernel
     metakernel = getKernels(mission, 'UTC2ET') #TO DO: figure out classes and how to get those kernel functions available to these functions
     #load kernels from metakernel
@@ -94,7 +63,7 @@ def ET2Date(ET):
 '''
 def getVectorFromSpaceCraftToTarget(ET, target):
     #get mission named from target
-    mission = getMissionFromTarget(target)
+    mission = getMissionFromTarget(target) #TO DO: figure out classes and how to get this functions available to these functions
     #get metakernel
     metakernel = getKernels(mission, 'getVectorFromSpaceCraftToTarget') #TO DO: figure out classes and how to get those kernel functions available to these functions
     #load kernels
@@ -160,7 +129,7 @@ def getVectorFromSpaceCraftToTarget(ET, target):
 '''
 def getVectorFromTargetToSun(ET, target):
     #get mission named from target
-    mission = getMissionFromTarget(target)
+    mission = getMissionFromTarget(target) #TO DO: figure out classes and how to get this functions available to these functions
     #get metakernel
     metakernel = getKernels(mission, 'getVectorFromSpaceCraftToTarget') #TO DO: figure out classes and how to get those kernel functions available to these functions
     
@@ -168,12 +137,32 @@ def getVectorFromTargetToSun(ET, target):
     spice.furnsh(metakernel)
     frame = 'J2000'
     correction = 'Not sure what this should be yet' #NOTE ON THIS IN PREV FUNCTION
-    observer = mission
+    observer = 'SUN'
+    
+    sundirection, lightime = spice.spkpos(target, ET, frame, correction, observer)
+    
+    #sun directin vector
+    X = sundirection[0]
+    Y = sundirection[1]
+    Z = sundirection[2]
+    
+    print('Apparent direction of '+target+' as seen from the Sun in the '+frame+' fixed-body frame (km, km/s):')
+    print('x_dir = '.format(+X), 'y_dir = '.format(+Y), 'z_dir = '.format(+Z))
+    
+    #make into unit vector
+    sundirUnit = spice.vhat(sundirection)
+    
+    Xhat = sundirUnit[0]
+    Yhat = sundirUnit[1]
+    Zhat = sundirUnit[2]
+    
+    print('Apparent direction of '+target+' as seen from the Sun in the '+frame+' fixed-body frame (km, km/s) expressed a unit vector:')
+    print('x_dir = '.format(+Xhat), 'y_dir = '.format(+Yhat), 'z_dir = '.format(+Zhat))
     
     #unload kernels
     spice.unload(metakernel)
 
-#DONT WANT A MAIN HERE - HELP
+#WANT TO NOT USE A MAIN IN EACH FILE, WANT A UNIVERSAL USER PROMPT FILLED MAIN TO CALL MY FUNCTIONS FROM ONE PLACE
 # if __name__ == '__main__':
 #     #get meta kernel for all these functions, TODO: figure out how to tie that script to this one and tie both to 'user input' file
 #     

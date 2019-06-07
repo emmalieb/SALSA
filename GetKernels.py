@@ -3,7 +3,8 @@ import numpy as py
 import pandas as pd
 import ftplib
 from ftplib import FTP
-from _ast import If
+import kernelDescriptions
+import Main
 
 """ 
     Author: Emma Lieb
@@ -49,7 +50,7 @@ def getMissionFromTarget(target):
     target - user input
     functionName - passed in from functions that require the kernels
 '''
-def getKernels(target,  functionName):
+def getKernels(target, functionName):
     
     #get mission from target name
     mission = getMissionFromTarget(target)
@@ -60,10 +61,7 @@ def getKernels(target,  functionName):
     
     #go into NAIF directory
     ftp.cwd('/pub/naif')
-    
-    #print what is in the NAIF directory
-    #ftp.retrlines('LIST') 
-    
+      
     #go into mission director
     ftp.cwd(mission)
     
@@ -76,20 +74,26 @@ def getKernels(target,  functionName):
     #find needed kernals
     #GOING TO USE IF STATEMENTS WITH FUNCTION NAMES FOR WHAT KERNALS TO GET - GOTTA PASS IN FUNCTIN NAMES
     if functionName is 'UTC2ET':
+        path_vals = 'kernels/lsk'
         ftp.cwd('LSK')
+        #get kernel filenames
+        kernels = ftp.retrlines('RETR filename')
         #load the kernels from here into metakernel
-        #TO DO: WRITE METAKERNEL
+        writeMetaKernel(path_vals, kernels, functionName)
+        
     if functionName is 'SCLK2ET':
+        path_vals = 'kernels/lsk', 'kernels/sclk'
         ftp.cwd('LSK')
         #load the kernels from here into metakernel
         #TO DO: GET THE RIGHT KERNELS IN THIS DIRECTORY
-        kernelPath = ftp.pwd()
+        
         #back out of LSK directory and go into sclk directory
-        writeMetaKernel(kernelPath, kernels, functionName)
+        writeMetaKernel(kernels, functionName)
     #say goodbye
     ftp.quit()
     
-def writeMetaKernel(kernelPath, kernels, functionName):
+def writeMetaKernel(kernels, functionName, mission):
+    kernelDscr = kernelDescriptions(kernels, mission)
     #open file according to functionName 
     mode = 'w'
     filename = functionName.toUpper()
@@ -97,21 +101,23 @@ def writeMetaKernel(kernelPath, kernels, functionName):
     #write header
     mkfile.write('\begintext')
     mkfile.write('The names and contents of the kernels referenced by this meta-kernel are as follows:')
+    #Write kernel descriptions
     mkfile.write('FILE NAME'+"    "+"CONTENTS")
+    mkfile.write(kernels + "    "+kernelDscr)
     
-    #write path values
     #write KERNELS TO LOAD 
     #close file
+def kernelDescriptions(kernels, mission):
+    kernelDscr = ''
+    for kernel in kernels:
+        if kernel is '*.tls':
+            kernelDscr = mission+' LSK'
+        elif kernel is '*.bsp' or kernel is '*.xsp' or kernel is '*.tsp':
+            kernelDscr = mission+' Ephemeris SPK'
+        elif kernel is '*.tsc':
+            kernelDscr = mission+' SCLK'
+        elif kernel is '*.tpc':
+            kernelDscr = mission+' PCK'
+    return kernelDscr
 
-#WANT TO NOT USE A MAIN IN EACH FILE, WANT A UNIVERSAL USER PROMPT FILLED MAIN TO CALL MY FUNCTIONS FROM ONE PLACE
-# if __name__ == '__main__':
-#     
-#     mission = getMissionFromTarget('Saturn')
-#     print(mission)
-#     
-#     functionName = 'TO DO: figure out how to call getKernels in the order of the time/geometry functions so the proper kernels are found for each function'
-#     
-#     kernels = getKernels(mission, functionName)
-#     
-#     makeMetaKernel(kernels)
     

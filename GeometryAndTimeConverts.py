@@ -98,8 +98,8 @@ def getVectorFromSpaceCraftToTarget(ET, target):
     vZ = state[5]
     
     print('Apparent state of '+target+' as seen from '+mission+' in the J2000 frame (km, km/s):')
-    print('x_pos = '.format(+X), 'y_pos = '.format(+Y), 'z_pos = '.format(+Z))
-    print('x_vel = '.format(+vX), 'y_vel = '.format(+vY), 'z_vel = '.format(+vZ))
+    print('x_pos = '.format(X), 'y_pos = '.format(Y), 'z_pos = '.format(Z))
+    print('x_vel = '.format(vX), 'y_vel = '.format(vY), 'z_vel = '.format(vZ))
     
     #second position vector is using target as stationary reference frame -- includes velocity of space craft
     frame = 'IAU_'+ target.upper()
@@ -120,8 +120,8 @@ def getVectorFromSpaceCraftToTarget(ET, target):
     fvZ = state[5]
     
     print('Apparent state of '+target+' as seen from '+mission+' in the '+frame+' fixed-body frame (km, km/s):')
-    print('x_pos = '.format(+fX), 'y_pos = '.format(+fY), 'z_pos = '.format(+fZ))
-    print('x_vel = '.format(+fvX), 'y_vel = '.format(+fvY), 'z_vel = '.format(+fvZ))
+    print('x_pos = '.format(fX), 'y_pos = '.format(fY), 'z_pos = '.format(fZ))
+    print('x_vel = '.format(fvX), 'y_vel = '.format(fvY), 'z_vel = '.format(fvZ))
     
     #unload kernels
     spice.unload(metakernel)

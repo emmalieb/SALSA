@@ -83,13 +83,25 @@ def getKernels(target,  functionName):
         ftp.cwd('LSK')
         #load the kernels from here into metakernel
         #TO DO: GET THE RIGHT KERNELS IN THIS DIRECTORY
+        kernelPath = ftp.pwd()
         #back out of LSK directory and go into sclk directory
-        
+        writeMetaKernel(kernelPath, kernels, functionName)
     #say goodbye
     ftp.quit()
     
-def makeMetaKernel(kernels):
-    #To do 
+def writeMetaKernel(kernelPath, kernels, functionName):
+    #open file according to functionName 
+    mode = 'w'
+    filename = functionName.toUpper()
+    mkfile = open(filename, mode)
+    #write header
+    mkfile.write('\begintext')
+    mkfile.write('The names and contents of the kernels referenced by this meta-kernel are as follows:')
+    mkfile.write('FILE NAME'+"    "+"CONTENTS")
+    
+    #write path values
+    #write KERNELS TO LOAD 
+    #close file
 
 #WANT TO NOT USE A MAIN IN EACH FILE, WANT A UNIVERSAL USER PROMPT FILLED MAIN TO CALL MY FUNCTIONS FROM ONE PLACE
 # if __name__ == '__main__':

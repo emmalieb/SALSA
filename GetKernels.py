@@ -3,14 +3,18 @@ import numpy as py
 import pandas as pd
 import ftplib
 from ftplib import FTP
+from _ast import If
 
 """ 
-    Author: Emma P. Lieb
+    Author: Emma Lieb
     
-    This method gets the kernels needed for a given operation and returns a metakernel of them. 
+    This method gets the kernels needed for a given operations in the order they are called by the overall program and returns a meta-kernel of them. 
 
 """
-
+'''Function to get mission name from target object name 
+    Parameters:  
+    target - user input
+'''
 def getMissionFromTarget(target):
     
     mission = ''
@@ -40,8 +44,15 @@ def getMissionFromTarget(target):
         
     return mission
 
-#this can only be used after knowing what the function has to do - it has to take in the mission, date, and function 'type'
-def getKernels(mission,  functionName):
+'''Function to get mission name from target object name 
+    Parameters:  
+    target - user input
+    functionName - passed in from functions that require the kernels
+'''
+def getKernels(target,  functionName):
+    
+    #get mission from target name
+    mission = getMissionFromTarget(target)
     
     #open ftp connection
     ftp = ftplib.FTP('naif.jpl.nasa.gov')
@@ -64,21 +75,31 @@ def getKernels(mission,  functionName):
     
     #find needed kernals
     #GOING TO USE IF STATEMENTS WITH FUNCTION NAMES FOR WHAT KERNALS TO GET - GOTTA PASS IN FUNCTIN NAMES
-    
+    if functionName is 'UTC2ET':
+        ftp.cwd('LSK')
+        #load the kernels from here into metakernel
+        #TO DO: WRITE METAKERNEL
+    if functionName is 'SCLK2ET':
+        ftp.cwd('LSK')
+        #load the kernels from here into metakernel
+        #TO DO: GET THE RIGHT KERNELS IN THIS DIRECTORY
+        #back out of LSK directory and go into sclk directory
+        
     #say goodbye
     ftp.quit()
     
 def makeMetaKernel(kernels):
-    
+    #To do 
 
-if __name__ == '__main__':
-    
-    mission = getMissionFromTarget('Saturn')
-    print(mission)
-    
-    functionName = 'TO DO: figure out how to call getKernels in the order of the time/geometry functions so the proper kernels are found for each function'
-    
-    kernels = getKernels(mission, functionName)
-    
+#NOT SURE HOW A MAIN WILL WORK FOR MY VARIOUS FILES OF FUNCTIONS, KIND OF WANT ONE MAIN FOR THE ALL THE FUNCTIONS WHERE THAT IS THE USER PROMPTS 
+# if __name__ == '__main__':
+#     
+#     mission = getMissionFromTarget('Saturn')
+#     print(mission)
+#     
+#     functionName = 'TO DO: figure out how to call getKernels in the order of the time/geometry functions so the proper kernels are found for each function'
+#     
+#     kernels = getKernels(mission, functionName)
+#     
 #     makeMetaKernel(kernels)
     

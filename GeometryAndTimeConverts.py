@@ -2,6 +2,15 @@ import spiceypy as spice
 import numpy as np
 import pandas as pd
 
+""" AUTHOR: Emma Lieb
+    
+    This file contains functions for converting user inputed time into ephemeris seconds 
+    and computes all necessary geometry to be used for spectra convolutions
+"""
+'''Function to get mission name from target object name 
+    Parameters:  
+    target - user input
+'''
 def getMissionFromTarget(target):
     
     mission = ''
@@ -29,10 +38,18 @@ def getMissionFromTarget(target):
         
     return mission
 
-
-#TIME CONVERSION FUNCTIONS
-def UTC2ET(time, metakernel, target):
+#****************************TIME CONVERSION FUNCTIONS**********************************
+'''Function to convert UTC time into ephemeris seconds since J2000
+    Parameters:  
+    time - user input
+    target - user input
+'''
+def UTC2ET(time, target):
     #converting from UTC time to ephemeris seconds since J2000 -- need leapseconds kernel -- 'kernels/lsk/naif0008.tls'
+    #get mission named from target
+    mission = getMissionFromTarget(target)
+    #get metakernel
+    metakernel = getKernels(mission, 'UTC2ET') #TO DO: figure out classes and how to get those kernel functions available to these functions
     #load kernels from metakernel
     spice.furnsh(metakernel)
     #convert time from UTC to ET
@@ -42,9 +59,18 @@ def UTC2ET(time, metakernel, target):
     
     print(ET)
     return(ET)
-    
-def SCLK2ET(time, metakernel, target):
+
+'''Function to convert space craft clock string into ephemeris seconds since J2000
+    Parameters:  
+    time - user input
+    target - user input
+'''
+def SCLK2ET(time target):
     #converting from space craft clock time string to ephemeris seconds since J2000 -- need leapseconds kernel and SCLK file for UTC time -'kernels/lsk/naif0008.tls','kernels/sclk/cas00084.tsc'
+    #get mission name from target
+    mission = getMissionFromTarget(target)
+    #get metakernel
+    metakernel = getKernels(mission, 'UTC2ET') #TO DO: figure out classes and how to get those kernel functions available to these functions
     #load kernels from metakernel
     spice.furnsh(metakernel)
     #convert time from UTC to ET
@@ -55,21 +81,29 @@ def SCLK2ET(time, metakernel, target):
     print(ET)
     return(ET)
     
-def ET2Date(ET, metakernel):
+def ET2Date(ET):
     #At the end for readability in plots, may not be needed
     date = spice.etcal(ET)
-    
     return(date)
 
-#GEOMETRY FUNCTIONS
-def getVectorFromSpaceCraftToTarget(ET, metakernel, target, mission):
-    #getting vector position from space craft to planet
+#***********************GEOMETRY FUNCTIONS************************************
+'''Function to get the vector position from space craft to planet
+    Parameters:  
+    ET - ephemeris seconds calculated from time conversion functions above
+    target - user input
+'''
+def getVectorFromSpaceCraftToTarget(ET, target):
+    #get mission named from target
+    mission = getMissionFromTarget(target)
+    #get metakernel
+    metakernel = getKernels(mission, 'getVectorFromSpaceCraftToTarget') #TO DO: figure out classes and how to get those kernel functions available to these functions
     #load kernels
     spice.furnsh(metakernel)
     #first position vector is using 'j2000' reference frame -- includes velocity of space craft
     frame = 'J2000'
-    correction = 'Not sure what this should be yet' #NOTE BELOW
+    correction = 'LT+S' #NOTE BELOW
     observer = mission
+    
     """
     NOTE ON ABBERATION CORRECTION FACTORS: NONE, LT and LT+S. None gives geometric position of the target body relative to
     the observer. LT returns vector corresponds to the position of the target at the moment it emitted photons arriving at the observer at `et'
@@ -78,7 +112,7 @@ def getVectorFromSpaceCraftToTarget(ET, metakernel, target, mission):
     Thinking that LT+S may be the way to go. 
     """
     
-    #compute state 9of space craft relative to object
+    #compute state of space craft relative to object
     [state, lighttime] = spice.spkezr(target, ET, frame, correction, observer)
     
     #position vector components
@@ -119,18 +153,29 @@ def getVectorFromSpaceCraftToTarget(ET, metakernel, target, mission):
     #unload kernels
     spice.unload(metakernel)
     
+'''Function to get the vector position from the target to the barycenter of the SS
+    Parameters:  
+    ET - ephemeris seconds calculated from time conversion functions above
+    target - user input
+'''
+def getVectorFromTargetToSun(ET, target):
+    #get mission named from target
+    mission = getMissionFromTarget(target)
+    #get metakernel
+    metakernel = getKernels(mission, 'getVectorFromSpaceCraftToTarget') #TO DO: figure out classes and how to get those kernel functions available to these functions
     
-def getVectorFromTargetToSun(ET, metakernel, target, mission):
-    #getting vector position from planet to barycenter of the SS
     #load kernels
     spice.furnsh(metakernel)
     frame = 'J2000'
-    correction = 'Not sure what this should be yet'
+    correction = 'Not sure what this should be yet' #NOTE ON THIS IN PREV FUNCTION
     observer = mission
     
     #unload kernels
     spice.unload(metakernel)
 
-if __name__ == '__main__':
-    #get meta kernel for all these functions, TODO: figure out how to tie that script to this one and tie both to 'user input' file
+#DONT WANT A MAIN HERE - HELP
+# if __name__ == '__main__':
+#     #get meta kernel for all these functions, TODO: figure out how to tie that script to this one and tie both to 'user input' file
+#     
+    
     

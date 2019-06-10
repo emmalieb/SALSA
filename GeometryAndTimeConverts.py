@@ -75,7 +75,7 @@ def getVectorFromSpaceCraftToTarget(ET, target):
     #first position vector is using 'j2000' reference frame -- includes velocity of space craft
     frame = 'J2000'
     correction = 'LT+S' #NOTE BELOW
-    observer = mission
+    observer = mission.toUpper()
     
     """
     NOTE ON ABBERATION CORRECTION FACTORS: NONE, LT and LT+S. None gives geometric position of the target body relative to
@@ -104,7 +104,7 @@ def getVectorFromSpaceCraftToTarget(ET, target):
     #second position vector is using target as stationary reference frame -- includes velocity of space craft
     frame = 'IAU_'+ target.upper()
     correction = 'Not sure what this should be yet' #NOTE ABOVE
-    observer = mission
+    observer = mission.toUpper()
 
     #compute state of space craft relative to object
     [state, lighttime] = spice.spkezr(target, ET, frame, correction, observer)
@@ -133,37 +133,133 @@ def getVectorFromSpaceCraftToTarget(ET, target):
 '''
 def getVectorFromTargetToSun(ET, target):
     #get mission named from target
-    mission = getMissionFromTarget(target) #TO DO: figure out classes and how to get this functions available to these functions
+    mission = getMissionFromTarget(target)
     #get metakernel
-    metakernel = getKernels(mission, 'getVectorFromSpaceCraftToTarget') #TO DO: figure out classes and how to get those kernel functions available to these functions
-    
+    metakernel = getKernels(mission, 'getVectorFromSpaceCraftToTarget')
     #load kernels
     spice.furnsh(metakernel)
+    
+    #define objects needed for position function
     frame = 'J2000'
-    correction = 'Not sure what this should be yet' #NOTE ON THIS IN PREV FUNCTION
+    correction = 'LT+S' #NOTE ON THIS IN PREV FUNCTION
     observer = 'SUN'
     
-    sundirection, lightime = spice.spkpos(target, ET, frame, correction, observer)
+    [sundirection, lighttime ]= spice.spkpos(target, ET, frame, correction, observer)
     
-    #sun directin vector
+    #sun direction vector
     X = sundirection[0]
     Y = sundirection[1]
     Z = sundirection[2]
     
+    vector = [X,Y,Z]
+    
     print('Apparent direction of '+target+' as seen from the Sun in the '+frame+' fixed-body frame (km, km/s):')
     print('x_dir = '.format(+X), 'y_dir = '.format(+Y), 'z_dir = '.format(+Z))
     
-    #make into unit vector
+    #normalize vector
     sundirUnit = spice.vhat(sundirection)
     
     Xhat = sundirUnit[0]
     Yhat = sundirUnit[1]
     Zhat = sundirUnit[2]
     
+    unitvector = [Xhat,Yhat,Zhat]
+    
     print('Apparent direction of '+target+' as seen from the Sun in the '+frame+' fixed-body frame (km, km/s) expressed a unit vector:')
     print('x_dir = '.format(+Xhat), 'y_dir = '.format(+Yhat), 'z_dir = '.format(+Zhat))
     
+    #need target to sun vector for angular separation function
+    getAngularSeparation(ET, target, vector)
+
     #unload kernels
     spice.unload(metakernel)
-  
     
+'''Function to get the vector position (including planetocentric radius, longitude and latitude) of the sub-spacecraft point on the target object
+        and to get the apparent sub-solar point on the target w.r.t the spacecraft. (Both in fixed-body reference frame of target)
+    Parameters:  
+    ET - ephemeris seconds calculated from time conversion functions above
+    target - user input
+'''
+def getSubCraftAndSubSolarVectors(ET, target):
+    #get mission named from target
+    mission = getMissionFromTarget(target)
+    #get metakernel
+    metakernel = getKernels(mission, 'getSubCraftAndSubSolarVectors')
+    #load kernels
+    spice.furnsh(metakernel)
+    
+    #define objects needed for position function - sub-OBSERVER
+    method = 'NEAR POINT/Ellipsoid' #NOTE BELOW
+    frame  = 'IAU_'+ target.upper()
+    correction = 'LT+S'
+    observer = mission.toUpper()
+    
+    #Compute the apparent sub-observer point of mission on target (cartesian vector)
+    [subpoint, targetcent, surfvect ]= spice.subpnt(method, target, ET, frame, correction, observer)
+    #computer altitude of spacecraft from sub-observer point
+    alt = spice.vnorm(surfvect)
+    #convert to planetocentric radius, longitude, and latitude
+    [rad, lon, lat] = spice.reclat(subpoint)
+    #convert from radians to degrees
+    lon,lat = lon,lat * spice.dpr()
+    
+    print( 'Apparent sub-observer point of '+mission+' on '+target+' in the '+frame+' frame (km):' )
+    print( 'LONGITUDE = {:16.3f}'.format(lon))
+    print( 'LATITUDE = {:16.3f}'.format(lat))
+    print( 'ALTITUDE = {:16.3f}'.format(alt))
+    
+    #define objects needed for position function - sub-SOLAR
+    method = 'INTERCEPT/Ellipsoid' #NOTE BELOW
+    frame  = 'IAU_'+ target.upper()
+    correction = 'LT+S'
+    observer = mission.toUpper()
+    
+    '''NOTE ON METHOD: The "Intercept/ellipsoid" method defines the sub-solar point as the target surface intercept of the line containing the Sun and
+     the target's center, while the "Near point/ellipsoid" method defines the sub-solar point as the the nearest point on the target relative to the Sun'''
+    
+    #compute sub-solar point on target as seen from spacecraft
+    [subpointsol, targetcentsol, surfvectsol] = spice.subslr(method, target, ET, frame, correction, observer)
+    
+    print( 'Apparent sub-solar point on '+target+' as seen from '+mission+' in the '+frame+' frame (km):' )
+    print( 'X = '.format(subpointsol[0]))
+    print( 'Y = '.format(subpointsol[1]))
+    print( 'Z = '.format(subpointsol[2]))
+    
+    #unload kernels
+    spice.unload(metakernel)
+    
+'''Function to get the angular separation between the vector from the target to the sun and the vector from Earth to the Sun
+    Parameters:  
+    ET - ephemeris seconds calculated from time conversion functions above
+    target - user input
+    vector - result from 'getVectorFromTargetToSun' function
+'''   
+def getAngularSeparation(ET, target, vector):
+    #get mission named from target
+    mission = getMissionFromTarget(target)
+    #get metakernel
+    metakernel = getKernels(mission, 'getAngularSeparation')
+    #load kernels
+    spice.furnsh(metakernel)
+    #define objects needed for position function - EARTH 2 SUN
+    target = 'SUN'
+    frame  = 'J2000'
+    correction = 'LT+S'
+    observer = 'EARTH'
+    
+    #compute direction from Earth to Sun
+    [sundirection, lighttime ]= spice.spkpos(target, ET, frame, correction, observer)
+    
+    [X,Y,Z]= sundirection[0], sundirection[1], sundirection[2]
+    earthvector = [X,Y,Z]
+    
+    #compute angular separation between earth vector and target vector
+    ang_sep = spice.vsep(vector,earthvector)
+    #convert from radians to degrees
+    ang_sep = spice.convrt(ang_sep, 'RADIANS', 'DEGREES')
+    
+    print( 'Angular separation between '+target+' and Earth in '+frame+'frame (degrees):' )
+    print( 'Separation = '.format(ang_sep[0]))
+
+    #unload kernels
+    spice.unload(metakernel)

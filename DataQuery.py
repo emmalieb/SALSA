@@ -154,3 +154,4 @@ def plotDataFromURL(data):
     #plot solar data
     subdf.plot(x="wavelength",y="irradiance", title="Solar Spectrum", color='m')
     plt.show()
+    

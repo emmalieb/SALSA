@@ -3,7 +3,6 @@ import numpy as py
 import pandas as pd
 import ftplib
 from ftplib import FTP
-import kernelDescriptions
 import Main
 
 """ 
@@ -34,7 +33,9 @@ def getMissionFromTarget(target):
     
     elif target is 'saturn' or target is 'Saturn':
         mission = 'CASSINI'
-    
+        
+    elif target is 'phoebe' or target is 'Phoebe':
+        mission = 'CASSINI'
     #not really a target
     elif target is 'pluto' or target is 'Pluto':
         mission = 'NEWHORIZONS'
@@ -42,6 +43,7 @@ def getMissionFromTarget(target):
     #really not a target
     elif target is 'moon' or target is'Moon':
         mission = 'LUNARORBITER'
+    
         
     return mission
 

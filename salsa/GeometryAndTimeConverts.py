@@ -1,8 +1,7 @@
 import spiceypy as spice
 import numpy as np
-import pandas as pd
 import importlib
-import Main
+from salsa import *
 from GetKernels import *
 from astropy.constants.iau2012 import au
 
@@ -62,6 +61,16 @@ def ET2Date(ET):
     date = spice.etcal(ET)
     return(date)
 
+def makeUnitVector(vector):
+    unitvector = spice.vhat(vector)
+    
+    X =  unitvector[0]
+    Y = unitvector[1]
+    Z=unitvector[2]
+    rtn_vector = np.array(X,Y,Z)
+    
+    return rtn_vector
+
 #***********************GEOMETRY FUNCTIONS************************************
 '''Function to get the vector position from space craft to planet
 Parameters:  
@@ -97,13 +106,8 @@ def getVectorFromSpaceCraftToTarget(ET, target):
     X = state[0]
     Y = state[1]
     Z = state[2]
-    #velocity vector components
-    vX = state[3]
-    vY = state[4]
-    vZ = state[5]
     
-    pos_vector = [X,Y,Z]
-    vel_vector = [vX,vY,vZ]
+    pos_vector = np.array(X,Y,Z)
     
 #     #need position vector to calculate distance vector in order to calculate true distance
 #     getVectorFromSpaceCraftToSun(ET, target, pos_vector)
@@ -112,9 +116,6 @@ def getVectorFromSpaceCraftToTarget(ET, target):
     print('x_pos = {:16.3f}'.format(state[0]))
     print('y_pos = {:16.3f}'.format(state[1]))
     print('z_pos = {:16.3f}'.format(state[1]))
-    print('x_vel = {:16.3f}'.format(state[3]))
-    print('y_vel = {:16.3f}'.format(state[4]))
-    print('z_vel = {:16.3f}'.format(state[5]))
     
     return(pos_vector)
     
@@ -147,7 +148,7 @@ def getVectorFromSpaceCraftToSun(ET, target, pos_vector):
     Y = sundirection[1]
     Z = sundirection[2]
     
-    sunDir_vector = [X,Y,Z]
+    sunDir_vector = np.array(X,Y,Z)
     
     distance_vector = sunDir_vector+pos_vector
     
@@ -159,22 +160,8 @@ def getVectorFromSpaceCraftToSun(ET, target, pos_vector):
     print('x_dir = {:16.3f}'.format(sundirection[0]))
     print('y_dir = {:16.3f}'.format(sundirection[1]))
     print('z_dir = {:16.3f}'.format(sundirection[2]))
-    
-    #normalize vector
-    sundirUnit = spice.vhat(sundirection)
-    
-    Xhat = sundirUnit[0]
-    Yhat = sundirUnit[1]
-    Zhat = sundirUnit[2]
-    
-    unit_vector = [Xhat,Yhat,Zhat]
-    
-    print('Apparent direction of '+target+' as seen from the Sun in the '+frame+' fixed-body frame (km, km/s) expressed as a unit vector:')
-    print('x_dir = {:16.3f}'.format(sundirUnit[0]))
-    print('y_dir = {:16.3f}'.format(sundirUnit[1]))
-    print('z_dir = {:16.3f}'.format(sundirUnit[2]))
 
-    return(sundirUnit)
+    return(sunDir_vector)
     #unload kernels
     spice.unload('metakernelTEST.tm')
     
@@ -189,12 +176,55 @@ def getTargetSunDistance(distance_vector):
     distance = spice.convrt( distance, 'KM', 'AU')
     return(distance)
 
+'''Function to get the vvelocity of the spacecraft with respect to the fixed-body reference frame of the target
+Parameters:  
+    ET - ephemeris seconds calculated from time conversion functions above
+    target - user input
+'''
+  
+def getVelocityVectorOfSpaceCraft(ET, target):
+    #get mission named from target
+    mission = getMissionFromTarget(target) 
+    #get metakernel
+#     metakernel = getKernels(mission, 'getVectorFromSpaceCraftToTarget') 
+    #load kernels
+    spice.furnsh('metakernelTEST.tm')
+
+    #second position vector is using target as stationary reference frame -- includes velocity of space craft
+    target = target.upper()
+    frame = 'IAU_'+ target.upper()
+    correction = 'LT+S' #NOTE ABOVE
+    observer = mission
+
+    #compute state of space craft relative to object
+    [state, lighttime] = spice.spkezr(target, ET, frame, correction, observer)
+    
+    #velocity vector components
+    vX = state[3]
+    vY = state[4]
+    vZ = state[5]
+    
+    vel_vector = [vX,vY,vZ]
+    
+     #need position vector to calculate distance vector in order to calculate true distance
+#     getVectorFromSpaceCraftToSun(ET, target, pos_vector)
+    
+    print('Apparent state of '+target+' as seen from '+mission+' in the '+frame+' fixed-body frame (km, km/s):')
+    print('x_vel = {:16.3f}'.format(state[3]))
+    print('y_vel = {:16.3f}'.format(state[4]))
+    print('z_vel = {:16.3f}'.format(state[5]))
+    
+    return(vel_vector)
+    
+    #unload kernels
+    spice.unload('metakernelTEST.tm')
+    
 '''Function to get the angular separation between the vector from the target to the sun and the vector from Earth to the Sun
 Parameters:  
     ET - ephemeris seconds calculated from time conversion functions above
     target - user input
     vector - result from 'getVectorFromTargetToSun' function
-'''   
+'''     
 def getAngularSeparation(ET, target, vector):
     #get mission named from target
     mission = getMissionFromTarget(target)

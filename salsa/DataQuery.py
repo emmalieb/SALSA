@@ -3,7 +3,7 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import Main
+from salsa import *
 
 """
     Author: Emma Lieb

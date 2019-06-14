@@ -2,9 +2,13 @@ import spiceypy as spice
 import numpy as np
 import importlib
 from salsa import *
-from GetKernels import *
+from .GetKernels import getMissionFromTarget
 from astropy.constants.iau2012 import au
+import os
 
+os.path.abspath(__file__)
+
+dir = '../../SALSA/test_kernels/'
 
 """ AUTHOR: Emma Lieb
     
@@ -20,11 +24,11 @@ Parameters:
 def UTC2ET(time, target):
     #converting from UTC time to ephemeris seconds since J2000 -- need leapseconds kernel -- 'kernels/lsk/naif0008.tls'
     #get mission named from target
-    mission = getMissionFromTarget(target) #TO DO: figure out classes and how to get this functions available to these functions
+#     mission = getMissionFromTarget(target) #TO DO: figure out classes and how to get this functions available to these functions
     #get metakernel
 #     metakernel = getKernels(mission, 'UTC2ET') #TO DO: figure out classes and how to get those kernel functions available to these functions
     #load kernels from metakernel
-    spice.furnsh('naif0008.tls') #THIS WILL BE METAKERNEL
+    spice.furnsh(dir+'naif0008.tls') #THIS WILL BE METAKERNEL
     #convert time from UTC to ET
     ET = spice.str2et(time)
     #unload kernels
@@ -41,17 +45,17 @@ Parameters:
 def SCLK2ET(time, target):
     #converting from space craft clock time string to ephemeris seconds since J2000 -- need leapseconds kernel and SCLK file for UTC time -'kernels/lsk/naif0008.tls','kernels/sclk/cas00084.tsc'
     #get mission name from target
-    mission = getMissionFromTarget(target) #TO DO: figure out classes and how to get this functions available to these functions
+#     mission = getMissionFromTarget(target) #TO DO: figure out classes and how to get this functions available to these functions
     #get metakernel
 #     metakernel = getKernels(mission, 'UTC2ET') #TO DO: figure out classes and how to get those kernel functions available to these functions
     #load kernels from metakernel
-    spice.furnsh('naif0008.tls')
-    spice.furnsh('cas00084.tsc')
+    spice.furnsh(dir+'naif0008.tls')
+    spice.furnsh(dir+'cas00084.tsc')
     #convert time from UTC to ET
     ET = spice.scs2e(-82, time)
     #unload kernels
-    spice.unload('naif0008.tls')
-    spice.unload('cas00084.tsc')
+    spice.unload(dir+'naif0008.tls')
+    spice.unload(dir+'cas00084.tsc')
     
     print(ET)
     return(ET)
@@ -64,10 +68,11 @@ def ET2Date(ET):
 def makeUnitVector(vector):
     unitvector = spice.vhat(vector)
     
-    X =  unitvector[0]
+    X = unitvector[0]
     Y = unitvector[1]
-    Z=unitvector[2]
-    rtn_vector = np.array(X,Y,Z)
+    Z = unitvector[2]
+    
+    rtn_vector = np.array([X,Y,Z])
     
     return rtn_vector
 
@@ -83,7 +88,7 @@ def getVectorFromSpaceCraftToTarget(ET, target):
     #get metakernel
 #     metakernel = getKernels(mission, 'getVectorFromSpaceCraftToTarget') 
     #load kernels
-    spice.furnsh('metakernelTEST.tm')
+    spice.furnsh(dir+'metakernelTEST.tm')
     
     """
     NOTE ON ABBERATION CORRECTION FACTORS: NONE, LT and LT+S. None gives geometric position of the target body relative to
@@ -107,7 +112,7 @@ def getVectorFromSpaceCraftToTarget(ET, target):
     Y = state[1]
     Z = state[2]
     
-    pos_vector = np.array(X,Y,Z)
+    pos_vector = np.array([X,Y,Z])
     
 #     #need position vector to calculate distance vector in order to calculate true distance
 #     getVectorFromSpaceCraftToSun(ET, target, pos_vector)
@@ -120,7 +125,7 @@ def getVectorFromSpaceCraftToTarget(ET, target):
     return(pos_vector)
     
     #unload kernels
-    spice.unload('metakernelTEST.tm')
+    spice.unload(dir+'metakernelTEST.tm')
     
 '''Function to get the vector position from the target to the barycenter of the SS
 Parameters:  
@@ -133,7 +138,7 @@ def getVectorFromSpaceCraftToSun(ET, target, pos_vector):
     #get metakernel
 #     metakernel = getKernels(mission, 'getVectorFromSpaceCraftToTarget')
     #load kernels
-    spice.furnsh('metakernelTEST.tm')
+    spice.furnsh(dir+'metakernelTEST.tm')
     
     #define objects needed for position function
     frame = 'IAU_'+ target.upper()
@@ -148,7 +153,7 @@ def getVectorFromSpaceCraftToSun(ET, target, pos_vector):
     Y = sundirection[1]
     Z = sundirection[2]
     
-    sunDir_vector = np.array(X,Y,Z)
+    sunDir_vector = np.array([X,Y,Z])
     
     distance_vector = sunDir_vector+pos_vector
     
@@ -163,7 +168,7 @@ def getVectorFromSpaceCraftToSun(ET, target, pos_vector):
 
     return(sunDir_vector)
     #unload kernels
-    spice.unload('metakernelTEST.tm')
+    spice.unload(dir+'metakernelTEST.tm')
     
 ''' Function to get distance in AU from Sun to Target. 
 Parameters: 
@@ -188,7 +193,7 @@ def getVelocityVectorOfSpaceCraft(ET, target):
     #get metakernel
 #     metakernel = getKernels(mission, 'getVectorFromSpaceCraftToTarget') 
     #load kernels
-    spice.furnsh('metakernelTEST.tm')
+    spice.furnsh(dir+'metakernelTEST.tm')
 
     #second position vector is using target as stationary reference frame -- includes velocity of space craft
     target = target.upper()
@@ -204,7 +209,7 @@ def getVelocityVectorOfSpaceCraft(ET, target):
     vY = state[4]
     vZ = state[5]
     
-    vel_vector = [vX,vY,vZ]
+    vel_vector = np.array([vX,vY,vZ])
     
      #need position vector to calculate distance vector in order to calculate true distance
 #     getVectorFromSpaceCraftToSun(ET, target, pos_vector)
@@ -217,7 +222,7 @@ def getVelocityVectorOfSpaceCraft(ET, target):
     return(vel_vector)
     
     #unload kernels
-    spice.unload('metakernelTEST.tm')
+    spice.unload(dir+'metakernelTEST.tm')
     
 '''Function to get the angular separation between the vector from the target to the sun and the vector from Earth to the Sun
 Parameters:  
@@ -231,7 +236,7 @@ def getAngularSeparation(ET, target, vector):
     #get metakernel
 #     metakernel = getKernels(mission, 'getAngularSeparation')
     #load kernels
-    spice.furnsh('metakernelTEST.tm')
+    spice.furnsh(dir+'metakernelTEST.tm')
     #define objects needed for position function - EARTH 2 SUN
     target = 'SUN'
     frame  = 'J2000'
@@ -241,8 +246,10 @@ def getAngularSeparation(ET, target, vector):
     #compute direction from Earth to Sun
     [sundirection, lighttime ]= spice.spkpos(target, ET, frame, correction, observer)
     
-    [X,Y,Z]= sundirection[0], sundirection[1], sundirection[2]
-    earthvector = [X,Y,Z]
+    X = sundirection[0]
+    Y = sundirection[1]
+    Z = sundirection[2]
+    earthvector = np.array([X,Y,Z])
     
     #compute angular separation between earth vector and target vector
     ang_sep = spice.vsep(vector,earthvector)
@@ -250,11 +257,11 @@ def getAngularSeparation(ET, target, vector):
     ang_sep = spice.convrt(ang_sep, 'RADIANS', 'DEGREES')
     
     print( 'Angular separation between '+target+' and Earth in '+frame+'frame (degrees):' )
-    print( 'Separation = {:16.3f}'.format(ang_sep[0]))
+    print( 'Separation = {:16.3f}'.format(ang_sep))
     
-    return(ang_sep[0])
+    return(ang_sep)
     #unload kernels
-    spice.unload('metakernelTEST.tm')    
+    spice.unload(dir+'metakernelTEST.tm')    
        
 '''Function to get the vector position (including planetocentric radius, longitude and latitude) of the sub-spacecraft point on the target object.
     (In fixed-body reference frame of target)
@@ -268,7 +275,7 @@ def getSubCraftVector(ET, target):
     #get metakernel
 #     metakernel = getKernels(mission, 'getSubCraftAndSubSolarVectors')
     #load kernels
-    spice.furnsh('metakernelTEST.tm')
+    spice.furnsh(dir+'metakernelTEST.tm')
     
     #define objects needed for position function - sub-OBSERVER
     method = 'NEAR POINT/Ellipsoid' #NOTE BELOW
@@ -293,11 +300,11 @@ def getSubCraftVector(ET, target):
     print( 'LATITUDE = {:16.3f}'.format(lat))
     print( 'ALTITUDE = {:16.3f}'.format(alt))
     
-    vector = [alt,lon,lat]
+    vector = np.array([alt,lon,lat])
     return(vector)
 
     #unload kernels
-    spice.unload('metakernelTEST.tm')
+    spice.unload(dir+'metakernelTEST.tm')
     
 '''Function to get the apparent sub-solar point on the target w.r.t the spacecraft. (In fixed-body reference frame of target)
 Parameters:  
@@ -310,7 +317,7 @@ def getSubSolarVector(ET, target):
     #get metakernel
 #     metakernel = getKernels(mission, 'getSubSolarVector')
     #load kernels
-    spice.furnsh('metakernelTEST.tm')
+    spice.furnsh(dir+'metakernelTEST.tm')
     #define objects needed for position function - sub-SOLAR
     method = 'INTERCEPT/Ellipsoid' #NOTE BELOW
     frame  = 'IAU_'+ target.upper()
@@ -333,9 +340,9 @@ def getSubSolarVector(ET, target):
     Y = subpointsol[1]
     Z = subpointsol[2]
     
-    vector = [X,Y,Z]
+    vector = np.array([X,Y,Z])
     return(vector)
     
     #unload kernels
-    spice.unload('metakernelTEST.tm')
+    spice.unload(dir+'metakernelTEST.tm')
     

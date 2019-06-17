@@ -73,17 +73,21 @@ def getKernels(target, functionName):
     #go to kernels directory
     ftp.cwd('kernels/')
     
+    #set kernel folder name
     kernel_dir = 'kernels_to_load'
     
-    #check if foler for kernels exists already, if so - delete and recreate it
-    if os.path.exists(kernel_dir):
-        shutil.rmtree()
+    #check if kernel folder exists already, if not - create it
+    if not os.path.exists(kernel_dir):
         mkdir('kernels_to_load')
-    else: #if not - create it
+    else: #if so - delete and create it
+        shutil.rmtree(os.path.abspath(kernel_dir))
         mkdir('kernels_to_load')
     
     #use os to get local path
-    kernel_path = os.path.abspath('kernels_to_load')
+    kernel_path = os.path.abspath(kernel_dir)
+    
+    def append_newline(input):
+        file.write(input + "\n")
 
     #find needed kernels based on function calling for them
     if functionName is 'UTC2ET':
@@ -94,9 +98,11 @@ def getKernels(target, functionName):
         #get path values
         path_vals = 'kernels/lsk'
         #open local file -- need to use os for an individualized path name 
-        lsk_file = open(kernel_path+'leapseconds.tls','w')
+        file = open(kernel_path+'/leapseconds.tls','w')
         #write kernel to local file
-        kernels = ftp.retrlines('RETR'+files[2], lsk_file.write)
+        ftp.retrlines('RETR '+files[2], append_newline)
+        #get kernel filenames 
+        kernels = files[2]
         #set metakernel filename
         filename = 'utc2et_mk.tm'
         #load the kernels from here into metakernel

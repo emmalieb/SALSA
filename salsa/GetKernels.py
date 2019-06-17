@@ -6,6 +6,8 @@ from ftplib import FTP
 import os
 from salsa import *
 from posix import mkdir
+import shutil
+from shutil import rmtree
 
 """ 
     Author: Emma Lieb
@@ -70,23 +72,29 @@ def getKernels(target, functionName):
     
     #go to kernels directory
     ftp.cwd('kernels/')
-
-    #make local directory to write kernels into
-    mkdir('kernels_to_load')
+    
+    kernel_dir = 'kernels_to_load'
+    
+    #check if foler for kernels exists already, if so - delete and recreate it
+    if os.path.exists(kernel_dir):
+        shutil.rmtree()
+        mkdir('kernels_to_load')
+    else: #if not - create it
+        mkdir('kernels_to_load')
+    
     #use os to get local path
-    path = os.path.abspath('kernels_to_load')
+    kernel_path = os.path.abspath('kernels_to_load')
 
     #find needed kernels based on function calling for them
     if functionName is 'UTC2ET':
         #go into lsk directory
         ftp.cwd('lsk/')
         #get kernel filenames in directory
-        files = ftp.nlst() 
-        print(files)
+        files = ftp.nlst()
         #get path values
         path_vals = 'kernels/lsk'
         #open local file -- need to use os for an individualized path name 
-        lsk_file = open(path+'leapseconds.tls','wb')
+        lsk_file = open(kernel_path+'leapseconds.tls','w')
         #write kernel to local file
         kernels = ftp.retrlines('RETR'+files[2], lsk_file.write)
         #set metakernel filename
@@ -108,7 +116,6 @@ def getKernels(target, functionName):
 #         filename = 'sclk2et_mk.tm'
 #         #load the kernels from here into metakernel
 #         writeMetaKernel(path_vals, kernels, filename, mission)
-#         
         
     return kernels
     #say goodbye

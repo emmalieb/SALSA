@@ -103,7 +103,7 @@ class SpectralCalibrationTest(unittest.TestCase):
         distance_vector = sunDir_vector+pos_vector
         
         distance = getTargetSunDistance(distance_vector)
-        self.assertAlmostEqual(fluxDistanceRelationship(data, distance), 0.00)
+        self.assertAlmostEqual(fluxDistanceRelationship(data, distance), 0.00) #
         
 if __name__ == '__main__':
     unittest.main()

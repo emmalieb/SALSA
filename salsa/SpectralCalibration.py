@@ -10,11 +10,8 @@ def fluxDistanceRelationship(solar_data, distance):
     solar_flux = np.array(df[['irradiance']])
     #square the distance to divide by later
     square_factor = distance * distance
-    #loop through irradiance values
-    for item in solar_flux:
-        #get each index of irradiance array
-        flux_at_sun = solar_flux[item]
-        #do the math - inverse square law
-        flux_at_target = np.divide(flux_at_sun[item], square_factor)
+    #do the math
+    flux_at_target = np.divide(solar_flux, square_factor)
 
     print(flux_at_target)
+    return(flux_at_target)

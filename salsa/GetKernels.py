@@ -3,7 +3,9 @@ import numpy as py
 import pandas as pd
 import ftplib
 from ftplib import FTP
+import os
 from salsa import *
+from posix import mkdir
 
 """ 
     Author: Emma Lieb
@@ -64,37 +66,49 @@ def getKernels(target, functionName):
     ftp.cwd('/pub/naif')
       
     #go into mission director
-    ftp.cwd(mission)
+    ftp.cwd(mission+'/')
     
     #go to kernels directory
-    ftp.cwd('/kernels')
-    
-    #print what is in the kernels directory
-    ftp.retrlines('LIST') 
-    
+    ftp.cwd('kernels/')
+
+    #make local directory to write kernels into
+    mkdir('kernels_to_load')
+    #use os to get local path
+    path = os.path.abspath('kernels_to_load')
+
     #find needed kernels based on function calling for them
     if functionName is 'UTC2ET':
+        #go into lsk directory
+        ftp.cwd('lsk/')
+        #get kernel filenames in directory
+        files = ftp.nlst() 
+        print(files)
+        #get path values
         path_vals = 'kernels/lsk'
-        ftp.cwd('LSK')
-        #get kernel filenames
-        kernels = ftp.retrlines('RETR filename')
+        #open local file -- need to use os for an individualized path name 
+        lsk_file = open(path+'leapseconds.tls','wb')
+        #write kernel to local file
+        kernels = ftp.retrlines('RETR'+files[2], lsk_file.write)
+        #set metakernel filename
         filename = 'utc2et_mk.tm'
         #load the kernels from here into metakernel
-        writeMetaKernel(path_vals, kernels, functionName, mission)
-        
-    elif functionName is 'SCLK2ET':
-        path_vals = "'kernels/lsk', 'kernels/sclk'"
-        ftp.cwd('LSK')
-        #get kernel filenames
-        kernels = ftp.retrlines('RETR filename')
-        #back out of LSK directory and go into sclk directory
-        ftp.cwd('cd ..')
-        ftp.cwd('SCLK')
-        #get kernel filenames
-        kernels = kernels+ftp.retrlines('RETR filename')
-        filename = 'sclk2et_mk.tm'
-        #load the kernels from here into metakernel
         writeMetaKernel(path_vals, kernels, filename, mission)
+        
+#     elif functionName is 'SCLK2ET':
+#         ftp.cwd('LSK')
+#         path_vals = "'kernels/lsk', 'kernels/sclk'"
+#         #get kernel filenames
+#         kernels = ftp.retrlines('RETR filename')
+#         print(kernels)
+#         #back out of LSK directory and go into sclk directory
+#         ftp.cwd('cd ..')
+#         ftp.cwd('SCLK')
+#         #get kernel filenames
+#         kernels = kernels+ftp.retrlines('RETR filename')
+#         filename = 'sclk2et_mk.tm'
+#         #load the kernels from here into metakernel
+#         writeMetaKernel(path_vals, kernels, filename, mission)
+#         
         
     return kernels
     #say goodbye

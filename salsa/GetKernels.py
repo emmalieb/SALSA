@@ -98,7 +98,7 @@ def getKernels(target, functionName):
         #get path values
         path_vals = 'kernels/lsk'
         #open local file -- need to use os for an individualized path name 
-        file = open(kernel_path+'/leapseconds.tls','w')
+        file = open(kernel_path+'/'+files[2]+'.tls','w')
         #write kernel to local file
         ftp.retrlines('RETR '+files[2], append_newline)
         #get kernel filenames 
@@ -108,21 +108,73 @@ def getKernels(target, functionName):
         #load the kernels from here into metakernel
         writeMetaKernel(path_vals, kernels, filename, mission)
         
-#     elif functionName is 'SCLK2ET':
-#         ftp.cwd('LSK')
-#         path_vals = "'kernels/lsk', 'kernels/sclk'"
-#         #get kernel filenames
-#         kernels = ftp.retrlines('RETR filename')
-#         print(kernels)
-#         #back out of LSK directory and go into sclk directory
+    elif functionName is 'SCLK2ET':
+        #go into lsk directory first
+        ftp.cwd('lsk/')
+        #get kernel filenames in directory
+        files = ftp.nlst()
+        #get path values
+        path_vals = 'kernels/lsk', 'kernels/sclk'
+        #open local file -- need to use os for an individualized path name 
+        file = open(kernel_path+'/'+files[2]+'.tls','w')
+        #write kernel to local file
+        ftp.retrlines('RETR '+files[2], append_newline)
+        #get kernel filenames 
+        kernels = files[2]
+        #back out of lsk directory
+        ftp.cwd('cd ..')
+        #go into sclk directory
+        ftp.cwd('sclk/')
+        #get kernel filenames in directory
+        files = ftp.nlst()
+        #open local file -- need to use os for an individualized path name
+        file = open(kernel_path+'/'+files[1]+'.tsc','w')
+        #get kernel filenames
+        ftp.retrlines('RETR ' +files[1], append_newline) #TO DO - MAY NEED TO IMPLEMENT A LOOP HERE FOR FINDING SPECIFIC KERNELS
+        #set filename for metakernel
+        filename = 'sclk2et_mk.tm'
+        #load the kernels from here into metakernel
+        writeMetaKernel(path_vals, kernels, filename, mission)
+        
+#     elif functionName is 'getVectorFromSpaceCraftToTarget':
+#         #go into lsk directory first
+#         ftp.cwd('lsk/')
+#         #get kernel filenames in directory
+#         files = ftp.nlst()
+#         #get path values
+#         path_vals = 'kernels/lsk', 'kernels/sclk', 'kernels/spk'
+#         #open local file -- need to use os for an individualized path name 
+#         file = open(kernel_path+'/'+files[2]+'.tls','w')
+#         #write kernel to local file
+#         ftp.retrlines('RETR '+files[2], append_newline)
+#         #get kernel filenames 
+#         kernels = files[2]
+#         #back out of lsk directory
 #         ftp.cwd('cd ..')
-#         ftp.cwd('SCLK')
+#         #go into sclk directory
+#         ftp.cwd('sclk/')
+#         #get kernel filenames in directory
+#         files = ftp.nlst()
+#         #open local file -- need to use os for an individualized path name
+#         file = open(kernel_path+'/'+files[1]+'.tsc','w')
 #         #get kernel filenames
-#         kernels = kernels+ftp.retrlines('RETR filename')
-#         filename = 'sclk2et_mk.tm'
+#         ftp.retrlines('RETR ' +files[1], append_newline) #TO DO - MAY IMPLEMENT A LOOP FOR FINDING SPECIFIC KERNEL
+#         #back out of lsk directory
+#         ftp.cwd('cd ..')
+#         #go into sclk directory
+#         ftp.cwd('spk/')
+#         #get kernel filenames in directory
+#         files = ftp.nlst()
+#         #TO DO - NEED TO IMPLEMENT A LOOP HERE FOR FINDING SPECIFIC KERNELS
+#         #open local file -- need to use os for an individualized path name
+#         file = open(kernel_path+'/'+files[1]+'.tsc','w')
+#         #get kernel filenames
+#         ftp.retrlines('RETR ' +files[1], append_newline)
+#         #set filename for metakernel
+#         filename = 'craftTargetVector_mk.tm'
 #         #load the kernels from here into metakernel
 #         writeMetaKernel(path_vals, kernels, filename, mission)
-        
+#         
     return kernels
     #say goodbye
     ftp.quit()
@@ -136,6 +188,7 @@ def writeMetaKernel(path_vals, kernels, filename, mission):
     mkfile.write('The names and contents of the kernels referenced by this meta-kernel are as follows:\n')
     #get descriptions of kernels for meta kernel
     kernelDscr = kernelDescriptions(kernels, mission)
+    print(kernelDscr)
     #Write kernel descriptions
     mkfile.write('FILE NAME'+"    "+"CONTENTS\n")
     mkfile.write(kernels+ "    "+kernelDscr+'\n\n')
@@ -157,8 +210,8 @@ def writeMetaKernel(path_vals, kernels, filename, mission):
 def kernelDescriptions(kernels, mission):
     kernelDscr = ''
     for kernel in kernels:
-        if kernel is '*.tls':
-            kernelDscr = mission+' LSK'
+        if kernel is 'naif0008.tls':
+            kernelDscr = 'Generic Leapseconds'
         elif kernel is '*.bsp' or kernel is '*.xsp' or kernel is '*.tsp':
             kernelDscr = mission+' Ephemeris SPK'
         elif kernel is '*.tsc':

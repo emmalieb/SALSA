@@ -1,37 +1,47 @@
 import unittest
 from salsa import *
 from .SpectralCalibration import *
+from .TimeConversions import *
 import os
 
 '''AUTHOR: Emma Lieb
 
     All tests use Saturnian satellite Pheobe as an example and UTC time 2004-06-11T19:32:00
 '''
-class DataQueryTest(unittest.TestCase):
-    def test_getURL(self):
-        primaryParameter = 'irradiance'
-        secondaryParameter = 'wavelength'
-        tertiaryParameter = 'NONE'
-        dataset = 'NONE'
-        wavelengthLow = '180'
-        wavelengthHigh = '300'
-        timeLow = '2010-03-20'
-        timeHigh = '2010-03-24'
-        self.assertAlmmostEqual(getURL(primaryParameter, secondaryParameter, tertiaryParameter, dataset, wavelengthLow, wavelengthHigh, timeLow, timeHigh), 0.00)
-
-# class GeometryAndTimeCnvtTest(unittest.TestCase):
-#      
+# class DataQueryTest(unittest.TestCase):
+#     def test_getURL(self):
+#         primaryParameter = 'irradiance'
+#         secondaryParameter = 'wavelength'
+#         tertiaryParameter = 'NONE'
+#         dataset = 'NONE'
+#         wavelengthLow = '180'
+#         wavelengthHigh = '300'
+#         timeLow = '2010-03-20'
+#         timeHigh = '2010-03-24'
+#         self.assertAlmostEqual(getURL(primaryParameter, secondaryParameter, tertiaryParameter, dataset, wavelengthLow, wavelengthHigh, timeLow, timeHigh), 0.00)
+#         
+# class TimeConvertsTest(unittest.TestCase):
 #     def test_UTC2ET(self):
 #         time = '2004-06-11T19:32:00'
 #         target = 'Phoebe'
 #         result = 140254384.184625
 #         self.assertAlmostEqual(UTC2ET(time, target), result, 4)
-#         
+#           
 #     def test_SCLK2ET(self):
 #         timeStr = '1465674964.105'
 #         target = 'Phoebe'
 #         result = 140254384.183426
 #         self.assertAlmostEqual(SCLK2ET(timeStr, target), result, 4)
+#         
+#     def test_ET2Date(self):
+#         ET = 140254384.184625
+#         self.assertAlmostEqual(ET2Date(ET), '2004 JUN 11 19:33:04.184')
+#         
+#     def test_UTC2KernelDate(self):
+#         time = '2004-06-11T19:32:00'
+#         self.assertEqual(UTC2KernelDate(time), '040611')
+        
+# class GeometryAndTimeCnvtTest(unittest.TestCase):
 #      
 #     def test_getVectorFromSpaceCraftToTarget(self):
 #         time = '2004-06-11T19:32:00'
@@ -94,27 +104,27 @@ class GetKernelsTest(unittest.TestCase):
         
         first = read_mktestfile.read()
         second = comp_timemktestfile.read()
-        
+
         print(first)
         self.assertMultiLineEqual(first, second)
         
-class SpectralCalibrationTest(unittest.TestCase):     
-      
-    def test_fluxDistanceRelationship(self):
-        target = 'Phoebe'
-        time = '2004-06-11T19:32:00'
-        ET = UTC2ET(time, target)
-        
-        url = getURL('irradiance','wavelength',None, None, 180, 300, '2010-03-20', '2010-03-24')
-        data = requests.get(url).json()
-        
-        pos_vector = getVectorFromSpaceCraftToTarget(ET, target)
-        
-        sunDir_vector = getVectorFromSpaceCraftToSun(ET, target, pos_vector)
-        distance_vector = sunDir_vector+pos_vector
-        
-        distance = getTargetSunDistance(distance_vector)
-        self.assertAlmostEqual(fluxDistanceRelationship(data, distance), 0.00) #
+# class SpectralCalibrationTest(unittest.TestCase):     
+#       
+#     def test_fluxDistanceRelationship(self):
+#         target = 'Phoebe'
+#         time = '2004-06-11T19:32:00'
+#         ET = UTC2ET(time, target)
+#         
+#         url = getURL('irradiance','wavelength',None, None, 180, 300, '2010-03-20', '2010-03-24')
+#         data = requests.get(url).json()
+#         
+#         pos_vector = getVectorFromSpaceCraftToTarget(ET, target)
+#         
+#         sunDir_vector = getVectorFromSpaceCraftToSun(ET, target, pos_vector)
+#         distance_vector = sunDir_vector+pos_vector
+#         
+#         distance = getTargetSunDistance(distance_vector)
+#         self.assertAlmostEqual(fluxDistanceRelationship(data, distance), 0.00) #
         
 if __name__ == '__main__':
     unittest.main()

@@ -7,6 +7,17 @@ import os
 
     All tests use Saturnian satellite Pheobe as an example and UTC time 2004-06-11T19:32:00
 '''
+class DataQueryTest(unittest.TestCase):
+    def test_getURL(self):
+        primaryParameter = 'irradiance'
+        secondaryParameter = 'wavelength'
+        tertiaryParameter = 'NONE'
+        dataset = 'NONE'
+        wavelengthLow = '180'
+        wavelengthHigh = '300'
+        timeLow = '2010-03-20'
+        timeHigh = '2010-03-24'
+        self.assertAlmmostEqual(getURL(primaryParameter, secondaryParameter, tertiaryParameter, dataset, wavelengthLow, wavelengthHigh, timeLow, timeHigh), 0.00)
 
 # class GeometryAndTimeCnvtTest(unittest.TestCase):
 #      

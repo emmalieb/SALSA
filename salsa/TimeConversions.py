@@ -60,7 +60,6 @@ def SCLK2ET(time, target):
 def ET2Date(ET):
     #At the end for readability in plots, may not be needed
     date = spice.etcal(ET)
-    print(date)
     return(date)
 
 '''Function to convert UTC string time to SPK kernel date filename format'''
@@ -76,18 +75,39 @@ def UTC2SPKKernelDate(time):
 
 '''Function to convert UTC string time to CK kernel date filename format'''
 def UTC2CKKernelDate(time):
+#     kernelDate = ''
+    year = int(time[2:4])
+    month = int(time[5:7])
+    day = int(time[8:10])
     #UTC is: YYYY - MM - DD T hr:min:sec 
     #ck kernel AFTER Nov. 2003 is: YYDOY
-    if int(time[0:10]) > int('2003-11-06'):
+    if year >= 3 and month >= 11 and day >= 6:
         YY = time[2:4]
         DOY = time.strftime('%j')
         kernelDate = YY+DOY
         
-    #ck kernel BEFORE Nov. 2003 is: YYMMDD
-    if int(time[0:10]) < int('2003-11-06'):
+    #ck kernel BEFORE Nov. 6 2003 is: YYMMDD
+    elif year <= 3 and month <= 11 and day <= 6:
         YY = time[2:4]
         MM = time[5:7]
         DD = time[8:10]
         kernelDate = YY+MM+DD
     
     return(kernelDate)
+
+'''Function to convert UTC string time to PCK date filename format'''
+def UTC2PCKKernelDate(time):
+    #UTC is: YYYY - MM - DD T hr:min:sec 
+    #PCK kernel is: DDMonthYYYY - ex: 11Jun2004
+    et = spice.utc2et(time)
+    date = spice.etcal(et)
+    
+    YYYY = date[0:4]
+    Month = date[5:8].lower()
+    DD = date[9:11]
+    
+    mon = Month.capitalize()
+    
+    kernelDate = DD+mon+YYYY
+    
+    return kernelDate

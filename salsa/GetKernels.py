@@ -146,7 +146,7 @@ def getKernels(target, functionName, time):
 '''Function to get SPK kernels
     SPK are ephemeris 
 '''  
-def getSPK(files, time):
+def getSPK(files, time): #TO DO: THERE ARE DIFFERENT SPK TYPES (Solar system, spacecraft, and target) - MUST BE CALLED SEPARATELY FROM GET KERNELS 
     kernel = ''
     #change UTC string to SPK date
     date = UTC2SPKKernelDate(time)
@@ -168,21 +168,27 @@ def getCK(files, time):
     #loop through files 
     for file in files:
         #find the correct kernel
-        if date in file and '.bc' in file: 
+        if date in file and '.bc' in file: #TO DO: SPECIFY THIS FILENAME MORE
             kernel = file
     return kernel
 # '''Function to get FK kernels'''
-# def getFK(files):
-#     #loop through files 
-#     for file in files:
-#         #find the correct kernel
-#     return kernel
-# '''Function to get PCK kernels'''
-# def getPCK(files):
-#     #loop through files 
-#     for file in files:
-#            #find the correct kernel
-#     return kernel
+def getFK(files):
+    kernel = ''
+    #loop through files 
+    for file in files:
+        #find the correct kernel
+        if 'cas_v41.tf' in file:
+            kernel = file
+    return kernel
+# '''Function to get PCK kernels''' #TO DO: THERE ARE DIFFERENT PCK TYPES (spacecraft, and target) - MUST BE CALLED SEPARATELY FROM GET KERNELS 
+def getPCK(files, time):
+    date = UTC2PCKKernelDate(time)
+    #loop through files 
+    for file in files:
+        #find the correct kernel
+        if date in file:
+            kernel = file
+    return kernel
 '''Function to construct and write a metakernel file from the kernels needed for each function
 Parameters: 
     path_vals - type of kernel passed in from getKernels

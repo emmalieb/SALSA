@@ -29,13 +29,13 @@ class GetKernelsTest(unittest.TestCase):
     def test_getKernels(self):
         time = '2004-06-11T19:32:00'
         target = 'Phoebe'
-        functionName = 'UTC2ET'
-        self.assertEqual(getKernels(target, functionName, time), 'naif0008.tls')
+        functionName = 'SCLK2ET'
+        self.assertEqual(getKernels(target, functionName, time), ['naif0008.tls','cas00172.tsc'])
         
     def test_writeMetaKernel(self):
         dir = '../../SALSA/test_kernels/'
         path_vals = 'kernels/LSK/'
-        kernels = 'naif0008.tls'
+        kernels = ['naif0008.tls', 'cas00172.tsc']
         filename = dir+'test_writingmk.tm'
         target = 'Phoebe'
         mission = getMissionFromTarget(target)

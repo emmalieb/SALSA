@@ -20,35 +20,35 @@ import os
 #         timeHigh = '2010-03-24'
 #         self.assertAlmostEqual(getURL(primaryParameter, secondaryParameter, tertiaryParameter, dataset, wavelengthLow, wavelengthHigh, timeLow, timeHigh), 0.00)
 #         
-class GetKernelsTest(unittest.TestCase):
-    
-    def test_getMissionFromTarget(self):
-        target = 'Phoebe'
-        self.assertEqual(getMissionFromTarget(target), "CASSINI")
-        
-    def test_getKernels(self):
-        time = '2004-06-11T19:32:00'
-        target = 'Phoebe'
-        functionName = 'SCLK2ET'
-        self.assertEqual(getKernels(target, functionName, time), ['naif0008.tls','cas00172.tsc'])
-        
-    def test_writeMetaKernel(self):
-        dir = '../../SALSA/test_kernels/'
-        path_vals = 'kernels/LSK/'
-        kernels = ['naif0008.tls', 'cas00172.tsc']
-        filename = dir+'test_writingmk.tm'
-        target = 'Phoebe'
-        mission = getMissionFromTarget(target)
-        
-        file = writeMetaKernel(path_vals, kernels, filename, mission)
-        read_mktestfile = open(file,'r')
-        comp_timemktestfile = open(dir+'time_mktest.tm','r')
-        
-        first = read_mktestfile.read()
-        second = comp_timemktestfile.read()
-
-        print(first)
-        self.assertMultiLineEqual(first, second)
+# class GetKernelsTest(unittest.TestCase):
+#     
+#     def test_getMissionFromTarget(self):
+#         target = 'Phoebe'
+#         self.assertEqual(getMissionFromTarget(target), "CASSINI")
+#         
+#     def test_getKernels(self):
+#         time = '2004-06-11T19:32:00'
+#         target = 'Phoebe'
+#         functionName = 'SCLK2ET'
+#         self.assertEqual(getKernels(target, functionName, time), ['naif0008.tls','cas00172.tsc'])
+#         
+#     def test_writeMetaKernel(self):
+#         dir = '../../SALSA/test_kernels/'
+#         path_vals = 'kernels/LSK/'
+#         kernels = ['naif0008.tls', 'cas00172.tsc']
+#         filename = dir+'test_writingmk.tm'
+#         target = 'Phoebe'
+#         mission = getMissionFromTarget(target)
+#         
+#         file = writeMetaKernel(path_vals, kernels, filename, mission)
+#         read_mktestfile = open(file,'r')
+#         comp_timemktestfile = open(dir+'time_mktest.tm','r')
+#         
+#         first = read_mktestfile.read()
+#         second = comp_timemktestfile.read()
+# 
+#         print(first)
+#         self.assertMultiLineEqual(first, second)
         
 class TimeConvertsTest(unittest.TestCase):
     def test_UTC2ET(self):
@@ -73,8 +73,9 @@ class TimeConvertsTest(unittest.TestCase):
         
     def test_UTC2CKKernelDate(self):
         time = '2004-06-11T19:32:00'
-        self.assertEqual(UTC2CKKernelDate(time), '04162')
-    def test_UTC2PCKKErnelDate(self):
+        self.assertEqual(UTC2CKKernelDate(time), '04163')
+        
+    def test_UTC2PCKKernelDate(self):
         time = '2004-06-11T19:32:00'
         self.assertEqual(UTC2PCKKernelDate(time), '11Jun2004')
         

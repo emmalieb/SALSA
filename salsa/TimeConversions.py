@@ -6,6 +6,7 @@ from .GetKernels import getMissionFromTarget
 from astropy.constants.iau2012 import au
 import os
 import datetime
+from datetime import *
 """ AUTHOR: Emma Lieb
     
     This file contains functions for converting user inputed time into ephemeris seconds.
@@ -76,23 +77,28 @@ def UTC2SPKKernelDate(time):
 '''Function to convert UTC string time to CK kernel date filename format'''
 def UTC2CKKernelDate(time):
 #     kernelDate = ''
-    year = int(time[2:4])
-    month = int(time[5:7])
-    day = int(time[8:10])
+    year = time[2:4]
+    month = time[5:7]
+    day = time[8:10]
+    
+    a = datetime.strptime(month+'/'+day+'/'+year, '%m/%d/%y')
+    b = datetime.strptime('11/06/03', '%m/%d/%y')
     #UTC is: YYYY - MM - DD T hr:min:sec 
     #ck kernel AFTER Nov. 2003 is: YYDOY
-    if year >= 3 and month >= 11 and day >= 6:
+    if a > b:
         YY = time[2:4]
-        DOY = time.strftime('%j')
-        kernelDate = YY+DOY
+        day = a.timetuple()
+        DOY = day.tm_yday
+        kernelDate = YY+str(DOY)
         
     #ck kernel BEFORE Nov. 6 2003 is: YYMMDD
-    elif year <= 3 and month <= 11 and day <= 6:
+    elif a < b:
         YY = time[2:4]
         MM = time[5:7]
         DD = time[8:10]
         kernelDate = YY+MM+DD
     
+    print(kernelDate)
     return(kernelDate)
 
 '''Function to convert UTC string time to PCK date filename format'''

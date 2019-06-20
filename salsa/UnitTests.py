@@ -20,18 +20,18 @@ import os
 #         timeHigh = '2010-03-24'
 #         self.assertAlmostEqual(getURL(primaryParameter, secondaryParameter, tertiaryParameter, dataset, wavelengthLow, wavelengthHigh, timeLow, timeHigh), 0.00)
 #         
-# class GetKernelsTest(unittest.TestCase):
-#     
-#     def test_getMissionFromTarget(self):
-#         target = 'Phoebe'
-#         self.assertEqual(getMissionFromTarget(target), "CASSINI")
-#         
-#     def test_getKernels(self):
-#         time = '2004-06-11T19:32:00'
-#         target = 'Phoebe'
-#         functionName = 'SCLK2ET'
-#         self.assertEqual(getKernels(target, functionName, time), ['naif0008.tls','cas00172.tsc'])
-#         
+class GetKernelsTest(unittest.TestCase):
+     
+    def test_getMissionFromTarget(self):
+        target = 'Phoebe'
+        self.assertEqual(getMissionFromTarget(target), "CASSINI")
+         
+    def test_getKernels(self):
+        time = '2004-06-11T19:32:00'
+        target = 'Phoebe'
+        functionName = 'vectorFromTargetToSpaceCraft'
+        self.assertEqual(getKernels(target, functionName, time), ['naif0008.tls','cas00172.tsc','040615AP_PE_04167_04186.bsp'])
+         
 #     def test_writeMetaKernel(self):
 #         dir = '../../SALSA/test_kernels/'
 #         path_vals = 'kernels/LSK/'
@@ -39,45 +39,45 @@ import os
 #         filename = dir+'test_writingmk.tm'
 #         target = 'Phoebe'
 #         mission = getMissionFromTarget(target)
-#         
+#          
 #         file = writeMetaKernel(path_vals, kernels, filename, mission)
 #         read_mktestfile = open(file,'r')
 #         comp_timemktestfile = open(dir+'time_mktest.tm','r')
-#         
+#          
 #         first = read_mktestfile.read()
 #         second = comp_timemktestfile.read()
-# 
+#  
 #         print(first)
 #         self.assertMultiLineEqual(first, second)
         
-class TimeConvertsTest(unittest.TestCase):
-    def test_UTC2ET(self):
-        time = '2004-06-11T19:32:00'
-        target = 'Phoebe'
-        result = 140254384.184625
-        self.assertAlmostEqual(UTC2ET(time, target), result, 4)
-           
-    def test_SCLK2ET(self):
-        timeStr = '1465674964.105'
-        target = 'Phoebe'
-        result = 140254384.183426
-        self.assertAlmostEqual(SCLK2ET(timeStr, target), result, 4)
-         
-    def test_ET2Date(self):
-        ET = 140254384.184625
-        self.assertAlmostEqual(ET2Date(ET), '2004 JUN 11 19:33:04.184')
-         
-    def test_UTC2SPKKernelDate(self):
-        time = '2004-06-11T19:32:00'
-        self.assertEqual(UTC2SPKKernelDate(time), '040611')
-        
-    def test_UTC2CKKernelDate(self):
-        time = '2004-06-11T19:32:00'
-        self.assertEqual(UTC2CKKernelDate(time), '04163')
-        
-    def test_UTC2PCKKernelDate(self):
-        time = '2004-06-11T19:32:00'
-        self.assertEqual(UTC2PCKKernelDate(time), '11Jun2004')
+# class TimeConvertsTest(unittest.TestCase):
+#     def test_UTC2ET(self):
+#         time = '2004-06-11T19:32:00'
+#         target = 'Phoebe'
+#         result = 140254384.184625
+#         self.assertAlmostEqual(UTC2ET(time, target), result, 4)
+#            
+#     def test_SCLK2ET(self):
+#         timeStr = '1465674964.105'
+#         target = 'Phoebe'
+#         result = 140254384.183426
+#         self.assertAlmostEqual(SCLK2ET(timeStr, target), result, 4)
+#          
+#     def test_ET2Date(self):
+#         ET = 140254384.184625
+#         self.assertAlmostEqual(ET2Date(ET), '2004 JUN 11 19:33:04.184')
+#          
+#     def test_UTC2SPKKernelDate(self):
+#         time = '2004-06-11T19:32:00'
+#         self.assertEqual(UTC2SPKKernelDate(time), '040611')
+#         
+#     def test_UTC2CKKernelDate(self):
+#         time = '2004-06-11T19:32:00'
+#         self.assertEqual(UTC2CKKernelDate(time), '04163')
+#         
+#     def test_UTC2PCKKernelDate(self):
+#         time = '2004-06-11T19:32:00'
+#         self.assertEqual(UTC2PCKKernelDate(time), '11Jun2004')
         
 # class GeometryAndTimeCnvtTest(unittest.TestCase):
 #      

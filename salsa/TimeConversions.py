@@ -2,7 +2,6 @@ import spiceypy as spice
 import numpy as np
 import importlib
 from salsa import *
-from .GetKernels import getMissionFromTarget
 from astropy.constants.iau2012 import au
 import os
 import datetime
@@ -70,8 +69,7 @@ def UTC2SPKKernelDate(time):
     YY = time[2:4]
     MM = time[5:7]
     DD = time[8:10]
-    kernelDate = YY+MM+DD
-    
+    kernelDate = YY+MM+DD    
     return(kernelDate)
 
 '''Function to convert UTC string time to CK kernel date filename format'''

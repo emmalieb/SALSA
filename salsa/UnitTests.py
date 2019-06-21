@@ -29,8 +29,8 @@ class GetKernelsTest(unittest.TestCase):
     def test_getKernels(self):
         time = '2004-06-11T19:32:00'
         target = 'Phoebe'
-        functionName = 'vectorFromTargetToSpaceCraft'
-        self.assertEqual(getKernels(target, functionName, time), ['naif0008.tls','cas00172.tsc','040615AP_PE_04167_04186.bsp','040615AP_SCPSE_04167_04186.bsp','040615AP_SE_04167_04186.bsp','040615AP_SK_04167_04186.bsp','de430.bsp'])
+        functionName = 'getVelocityVectorOfSpaceCraft'
+        self.assertEqual(getKernels(target, functionName, time), ['naif0008.tls','cas00172.tsc','040615AP_PE_04167_04186.bsp','040615AP_SCPSE_04167_04186.bsp','040615AP_SE_04167_04186.bsp','040615AP_SK_04167_04186.bsp','04163_04165pa_itl.bc','de430.bsp', 'cas_v41.tf'])
          
 #     def test_writeMetaKernel(self):
 #         dir = '../../SALSA/test_kernels/'

@@ -9,6 +9,7 @@ from .TimeConversions import *
 from posix import mkdir
 import shutil
 from shutil import rmtree
+from astropy.io.ascii.tests.test_connect import files
 """ 
     Author: Emma Lieb
     
@@ -190,10 +191,25 @@ def getKernels(target, functionName, time):
         #loop through spacecraft spk kernels
         for spk_kernel in spk_kernels:
             path_vals.append('kernels/spk')
-            #open local file -- need to use os for an individualized path name
+            #open local file -- need to use os for an individualized path name - spk is binary
             file = open(kernel_path+'/'+spk_kernel,'wb')
+            #write kernel to local file
             ftp.retrbinary('RETR ' +spk_kernel, file.write)
             kernels.append(spk_kernel)
+        #back out of spk/kernels/mission folder
+        ftp.cwd('../../../')
+        #go into 'generic kernels' folder for spk kernels
+        ftp.cwd('generic_kernels/spk/planets/')
+        #get file list
+        files = ftp.nlst()
+        #get generic spk kernel
+        generic_spk = getGenericKernels(files)
+        #open local file - spk is binary
+        file = open(kernel_path+'/'+generic_spk,'wb')
+        #write kernel to local file
+        ftp.retrbinary('RETR ' +generic_spk, file.write)
+        #get generic planetary and solar system kernels    
+        kernels.append(generic_spk)
         #set filename for metakernel
         filename =  metakernel_path+'targetCraftVector_mk.tm'
         #load the kernels from here into metakernel
@@ -276,6 +292,11 @@ def getPCK(files, time):
         if date in file:
             kernel = file
     return kernel
+def getGenericKernels(files):
+    for file in files:
+        if 'de430.bsp' in file:
+            kernel = file
+    return kernel
 '''Function to construct and write a metakernel file from the kernels needed for each function
 Parameters: 
     path_vals - type of kernel passed in from getKernels
@@ -300,7 +321,8 @@ def writeMetaKernel(path_vals, kernels, filename, mission):
     mkfile.write('\\begindata \n\n')
     #write path values
     mkfile.write('PATH_VALUES = (\n')
-    mkfile.write('\'{0}\'\n'.format(path_vals.split(',')))
+    for val in path_vals:    
+        mkfile.write('\'{0}\'\n'.format(val))
     mkfile.write(')\n\n')
     #write KERNELS TO LOAD
     mkfile.write('KERNELS_TO_LOAD = (\n')

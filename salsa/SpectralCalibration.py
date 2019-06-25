@@ -4,8 +4,6 @@ from salsa import *
 import scipy.signal as signal
 import spiceypy as spice
 
-from .DataQuery import *
-
 
 def fluxDistanceRelationship(solar_data, distance):
     #figure out units 

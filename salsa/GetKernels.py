@@ -1,15 +1,3 @@
-import spiceypy as spice
-import numpy as py
-import pandas as pd
-import ftplib
-from ftplib import FTP
-import os
-from salsa import *
-from .TimeConversions import *
-from posix import mkdir
-import shutil
-from shutil import rmtree
-from astropy.io.ascii.tests.test_connect import files
 """ 
     Author: Emma Lieb
     
@@ -20,6 +8,23 @@ from astropy.io.ascii.tests.test_connect import files
     Parameters:  
     target - user input
 '''
+import ftplib
+from ftplib import FTP
+import os
+from posix import mkdir
+import shutil
+from shutil import rmtree
+
+from astropy.io.ascii.tests.test_connect import files
+
+import numpy as py
+import pandas as pd
+from salsa import *
+import spiceypy as spice
+from datetime import datetime
+# from salsa import UTC2SPKKernelDate
+
+
 def getMissionFromTarget(target):
     
     mission = ''
@@ -134,7 +139,7 @@ def getKernels(target, functionName, time):
         #set filename for metakernel
         filename = 'sclk2et_mk.tm'
         #load the kernels from here into metakernel
-        writeMetaKernel(path_vals, kernels, filename, mission)
+        metaKernel = writeMetaKernel(path_vals, kernels, filename, mission)
          
     elif functionName is 'getvectorFromTargetToSpaceCraft' or functionName is 'getVectorFromSpaceCraftToSun':
         #create kernels list
@@ -193,7 +198,7 @@ def getKernels(target, functionName, time):
             #set filename for metakernel
             filename = 'craftSunVector_mk.tm'
         #load the kernels from here into metakernel
-        writeMetaKernel(path_vals, kernels, filename, mission)
+        metaKernel = writeMetaKernel(path_vals, kernels, filename, mission)
         
     elif functionName is 'getVelocityVectorOfSpaceCraft' or functionName is 'getSubCraftVector' or functionName is 'getSubSolarVector' or functionName is 'getAngularSeparation':
         #create kernels list
@@ -306,9 +311,9 @@ def getKernels(target, functionName, time):
             #set filename for metakernel
             filename = 'aungularSep_mk.tm'
         #load the kernels from here into metakernel
-        writeMetaKernel(path_vals, kernels, filename, mission)
+        metaKernel = writeMetaKernel(path_vals, kernels, filename, mission)
                 
-    return kernels
+    return metaKernel
     #say goodbye
     ftp.quit()
 
@@ -374,9 +379,9 @@ def getFK(files):
             kernel = file
     return kernel
 # '''Function to get PCK kernels''' #TO DO: THERE ARE DIFFERENT PCK TYPES (spacecraft, and target) - MUST BE CALLED SEPARATELY FROM GET KERNELS 
-def getPCK(files, time):
+def getPCK(files, time, target):
     kernel =''
-    date = UTC2PCKKernelDate(time)
+    date = UTC2PCKKernelDate(time, target)
     #loop through files 
     for file in files:
         #find the correct kernel

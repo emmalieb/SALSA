@@ -3,8 +3,7 @@
     This file contains functions for converting user inputed time into ephemeris seconds.
 """
 
-from datetime import *
-import datetime
+from datetime import datetime
 import importlib
 import os
 
@@ -12,7 +11,6 @@ from astropy.constants.iau2012 import au
 
 import numpy as np
 from salsa import *
-from salsa.GetKernels import getMissionFromTarget
 import spiceypy as spice
 
 

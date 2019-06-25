@@ -1,10 +1,3 @@
-import requests
-import json
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from salsa import *
-
 """
     Author: Emma Lieb
     
@@ -57,11 +50,10 @@ from salsa import *
 
     Example:
         Input: 
-            getURL('irradiance','wavelength',None, None, 180, 300, '2010-03-20', '2010-03-24', 'convert_time')
+            getURL('irradiance','wavelength',None, None, 180, 300, '2010-03-20', '2010-03-24')
         Output: 
             http://lasp.colorado.edu/lisird/latis/dap/sorce_solstice_ssi_high_res.json?irradiance,wavelength&wavelength%3E=180&wavelength%3C=300&time%3E=2010-03-20&time%3C=2010-03-24
 """
-
 '''Function to create a URL that queries the solar data from a given dataset on LISRD
 Parameters:
     primaryParameter - commonly 'irradiance' but can be another quantity as long as the column exists in the data
@@ -71,6 +63,17 @@ Parameters:
     wavelengthLow, wavelengthHigh - wavelength range given by user to limit results, if they did not specify a solar dataset name it is used to find the dataset name
     timeLow, timeHigh - time range given by the user to limit results
 '''
+
+import json
+
+import requests
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from salsa import *
+
+
 def getURL(primaryParameter, secondaryParameter, tertiaryParameter=None, dataset = None, wavelengthLow = None, wavelengthHigh = None, timeLow = None, timeHigh = None):
     
     urlStart = 'http://lasp.colorado.edu/lisird/latis/dap/'

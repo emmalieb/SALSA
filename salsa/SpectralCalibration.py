@@ -3,6 +3,7 @@ import numpy as np
 from salsa import *
 import scipy.signal as signal
 import spiceypy as spice
+from matplotlib.pyplot import xlabel
 
 
 def fluxDistanceRelationship(solar_data, distance):
@@ -28,12 +29,18 @@ def periodicAnalysis(solar_data):
         x = np.append(x, df['time'])
         df = pd.DataFrame(solar_data["sorce_ssi_l3"]["samples"][i]['spectrum'])
         y = np.append(y, df['irradiance'])
-    freqs = np.linspace(x[0], x[len(x)-1])
+#     freqs = np.linspace(1.0/365.0,1)
+    freqs = np.linspace(1.0, 182, 365)
+
+#     print(freqs)
+    y[y == None] = 0
+    print(x)
+    print(y)
     #perform lombscargle 
-    pgram = signal.lombscargle(x, y, freqs)
+    pgram = signal.lombscargle(x, y, freqs,normalize = True)
     print(pgram)
 #     plt.plot(x,y,'r+')
-    plt.plot(freqs,pgram, 'r+')
+    plt.plot(freqs,pgram, 'r-')
     plt.show()
     #get modes
     #linearly combine

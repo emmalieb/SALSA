@@ -138,7 +138,7 @@ class SpectralCalibrationTest(unittest.TestCase):
         self.assertAlmostEqual(fluxDistanceRelationship(data, distance), 0.00)
         
     def test_periodicAnalysis(self):
-        url = getURL('irradiance','wavelength', 'time', 'sorce_ssi_l3', 121 , 122, '2009-01-23', '2010-01-23')
+        url = getURL('irradiance','wavelength', 'time', 'sorce_ssi_l3', 121 , 122, '2005-01-23', '2006-01-23')
         print(url)
         solar_data = requests.get(url).json()
          

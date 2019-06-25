@@ -1,15 +1,20 @@
-import spiceypy as spice
-import numpy as np
-import importlib
-from salsa import *
-from astropy.constants.iau2012 import au
-import os
-import datetime
-from datetime import *
 """ AUTHOR: Emma Lieb
     
     This file contains functions for converting user inputed time into ephemeris seconds.
 """
+
+from datetime import *
+import datetime
+import importlib
+import os
+
+from astropy.constants.iau2012 import au
+
+import numpy as np
+from salsa import *
+from salsa.GetKernels import getMissionFromTarget
+import spiceypy as spice
+
 
 dir = '../../SALSA/test_kernels/'
 #****************************TIME CONVERSION FUNCTIONS**********************************
@@ -21,15 +26,15 @@ Parameters:
 def UTC2ET(time, target):
     #converting from UTC time to ephemeris seconds since J2000 -- need leapseconds kernel -- 'kernels/lsk/naif0008.tls'
     #get mission named from target
-#     mission = getMissionFromTarget(target) 
+    mission = getMissionFromTarget(target) 
     #get metakernel
-#     metakernel = getKernels(mission, 'UTC2ET') 
+    metakernel = getKernels(mission, 'UTC2ET',time) 
     #load kernels from metakernel
-    spice.furnsh(dir+'naif0008.tls') #THIS WILL BE METAKERNEL
+    spice.furnsh(metakernel) #THIS WILL BE METAKERNEL
     #convert time from UTC to ET
     ET = spice.str2et(time)
     #unload kernels
-    spice.unload('naif0008.tls')
+    spice.unload(metakernel)
     
     print(ET)
     return(ET)
@@ -44,15 +49,13 @@ def SCLK2ET(time, target):
     #get mission name from target
     mission = getMissionFromTarget(target)
     #get metakernel
-#     metakernel = getKernels(mission, 'UTC2ET') 
+    metakernel = getKernels(mission, 'SCLK2ET', time) 
     #load kernels from metakernel
-    spice.furnsh(dir+'naif0008.tls')
-    spice.furnsh(dir+'cas00084.tsc')
+    spice.furnsh(metakernel)
     #convert time from UTC to ET
     ET = spice.scs2e(-82, time)
     #unload kernels
-    spice.unload(dir+'naif0008.tls')
-    spice.unload(dir+'cas00084.tsc')
+    spice.unload(metakernel)
     
     print(ET)
     return(ET)
@@ -96,14 +99,13 @@ def UTC2CKKernelDate(time):
         DD = time[8:10]
         kernelDate = YY+MM+DD
     
-    print(kernelDate)
     return(kernelDate)
 
 '''Function to convert UTC string time to PCK date filename format'''
-def UTC2PCKKernelDate(time):
+def UTC2PCKKernelDate(time,target):
     #UTC is: YYYY - MM - DD T hr:min:sec 
     #PCK kernel is: DDMonthYYYY - ex: 11Jun2004
-    et = spice.utc2et(time)
+    et = UTC2ET(time, target)
     date = spice.etcal(et)
     
     YYYY = date[0:4]

@@ -19,19 +19,21 @@ def fluxDistanceRelationship(solar_data, distance):
     return(flux_at_target)
 
 def periodicAnalysis(solar_data):
-    #get solar spectra
-    df = pd.DataFrame(solar_data["sorce_ssi_l3"]["samples"][0])
-    x = np.array(df['time'])
-    df = pd.DataFrame(solar_data["sorce_ssi_l3"]["samples"][0]['spectrum'])
-    y = np.array(df['irradiance'])
-    freqs = np.linspace(0.01, 10, 100000)
-    print(x)
-    print(y)
+    #instantiate arrays
+    x = np.array([])
+    y = np.array([])
+    for i in range(365): #loop over number of days
+        #get solar spectra
+        df = pd.DataFrame(solar_data["sorce_ssi_l3"]["samples"][i])
+        x = np.append(x, df['time'])
+        df = pd.DataFrame(solar_data["sorce_ssi_l3"]["samples"][i]['spectrum'])
+        y = np.append(y, df['irradiance'])
+    freqs = np.linspace(x[0], x[len(x)-1])
     #perform lombscargle 
-    period = signal.lombscargle(x, y, freqs)
-    #plot
-    plt.plot(x,y,'r+')
-    plt.plot(freqs,period)
+    pgram = signal.lombscargle(x, y, freqs)
+    print(pgram)
+#     plt.plot(x,y,'r+')
+    plt.plot(freqs,pgram, 'r+')
     plt.show()
     #get modes
     #linearly combine

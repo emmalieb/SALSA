@@ -5,7 +5,10 @@
 import os
 import unittest
 
-from salsa import *
+from salsa.TimeConversions import *
+from salsa.GetKernels import *
+from salsa.DataQuery import *
+from salsa.SpectralCalibration import *
 
 class DataQueryTest(unittest.TestCase):
     def test_getURL(self):
@@ -133,8 +136,10 @@ class SpectralCalibrationTest(unittest.TestCase):
           
         distance = getTargetSunDistance(distance_vector)
         self.assertAlmostEqual(fluxDistanceRelationship(data, distance), 0.00)
+        
     def test_periodicAnalysis(self):
-        url = getURL('irradiance','wavelength',None, None, 180, 300, '2010-03-20', '2010-03-24')
+        url = getURL('irradiance','wavelength', 'time', 'sorce_ssi_l3', 121 , 122, '2009-01-23', '2010-01-23')
+        print(url)
         solar_data = requests.get(url).json()
          
         periodicAnalysis(solar_data)

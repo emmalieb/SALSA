@@ -31,6 +31,8 @@ def makeUnitVector(vector):
     return rtn_vector
 
 def getVectorFromSpaceCraftToTarget(time, target):
+    from salsa.TimeConversions import UTC2ET
+    from salsa.GetKernels import getMissionFromTarget, getKernels
     ET = UTC2ET(time, target)
     #get mission named from target
     mission = getMissionFromTarget(target) 
@@ -81,6 +83,8 @@ Parameters:
     target - user input
 '''
 def getVectorFromSpaceCraftToSun(time, target, pos_vector):
+    from salsa.TimeConversions import UTC2ET
+    from salsa.GetKernels import getMissionFromTarget, getKernels
     ET = UTC2ET(time, target)
     #get mission named from target
     mission = getMissionFromTarget(target)
@@ -95,7 +99,7 @@ def getVectorFromSpaceCraftToSun(time, target, pos_vector):
     correction = 'LT+S' #NOTE ON THIS IN PREV FUNCTION
     observer = 'SUN'
     
-    [sundirection, lighttime ]= spice.spkpos(target, ET, frame, correction, observer)
+    [sundirection, lighttime ] = spice.spkpos(target, ET, frame, correction, observer)
 
     #sun direction vector
     X = sundirection[0]
@@ -137,6 +141,8 @@ Parameters:
 '''
   
 def getVelocityVectorOfSpaceCraft(time, target):
+    from salsa.TimeConversions import UTC2ET
+    from salsa.GetKernels import getMissionFromTarget, getKernels
     ET = UTC2ET(time, target)
     #get mission named from target
     mission = getMissionFromTarget(target) 
@@ -161,8 +167,8 @@ def getVelocityVectorOfSpaceCraft(time, target):
     
     vel_vector = np.array([vX,vY,vZ])
     
-     #need position vector to calculate distance vector in order to calculate true distance
-#     getVectorFromSpaceCraftToSun(ET, target, pos_vector)
+    #need position vector to calculate distance vector in order to calculate true distance
+    #getVectorFromSpaceCraftToSun(ET, target, pos_vector)
     
     print('Apparent state of '+target+' as seen from '+mission+' in the '+frame+' fixed-body frame (km, km/s):')
     print('x_vel = {:16.3f}'.format(state[3]))
@@ -181,6 +187,8 @@ Parameters:
     vector - result from 'getVectorFromTargetToSun' function
 '''     
 def getAngularSeparation(time, target, dist_vector):
+    from salsa.TimeConversions import UTC2ET
+    from salsa.GetKernels import getMissionFromTarget, getKernels
     ET = UTC2ET(time, target)
     #get mission named from target
     mission = getMissionFromTarget(target)
@@ -221,6 +229,8 @@ Parameters:
     target - user input
 '''
 def getSubCraftVector(time, target):
+    from salsa.TimeConversions import UTC2ET
+    from salsa.GetKernels import getMissionFromTarget, getKernels
     ET = UTC2ET(time, target)
     #get mission named from target
     mission = getMissionFromTarget(target)
@@ -264,6 +274,8 @@ Parameters:
     target - user input
 '''
 def getSubSolarVector(time, target):
+    from salsa.TimeConversions import UTC2ET
+    from salsa.GetKernels import getMissionFromTarget, getKernels
     ET = UTC2ET(time, target)
     #get mission named from target
     mission = getMissionFromTarget(target)

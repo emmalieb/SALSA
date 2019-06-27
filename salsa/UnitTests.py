@@ -138,21 +138,31 @@ class SpectralCalibrationTest(unittest.TestCase):
         self.assertAlmostEqual(fluxDistanceRelationship(data, distance), 0.00)
         
     def test_periodicAnalysis(self):
-        url = getURL('irradiance','wavelength', 'time', 'sorce_ssi_l3', 121 , 122, '2004-01-23', '2007-01-23')
+        timeLow = '2005-02-25'
+        timeHigh = '2008-02-25'
+        url = getURL('irradiance','wavelength', 'time', 'sorce_ssi_l3', 121 , 122, timeLow, timeHigh)
         print(url)
         solar_data = requests.get(url).json()
-         
-        periodicAnalysis(solar_data)
+        day_delta = getNumberOfDaysBetween(timeLow, timeHigh)
+          
+        periodicAnalysis(solar_data, day_delta)
      
     def test_sunFaceCorrection(self):
         target = 'Phoebe'
         time = '2004-06-11T19:32:00'
-        ET = UTC2ET(time, target)
-        pos_vector = getVectorFromSpaceCraftToTarget(ET, target)
-        sunDir_vector = getVectorFromSpaceCraftToSun(ET, target, pos_vector)
+        pos_vector = getVectorFromSpaceCraftToTarget(time, target)
+        sunDir_vector = getVectorFromSpaceCraftToSun(time, target, pos_vector)
         distance_vector = sunDir_vector+pos_vector
-        ang_sep = getAngularSeparation(ET, target, distance_vector)
-        ang_corr = sunFaceCorrection(ang_sep)
+        
+        timeLow = '2005-02-25'
+        timeHigh = '2008-02-25'
+        url = getURL('irradiance','wavelength', 'time', 'sorce_ssi_l3', 121 , 122, timeLow, timeHigh)
+        ang_sep = getAngularSeparation(time, target, distance_vector)
+        solar_data = requests.get(url).json()
+        days = getNumberOfDaysBetween(timeLow, timeHigh)
+        coeffs = periodicAnalysis(solar_data, days) 
+        
+        ang_corr = sunFaceCorrection(ang_sep,coeffs,time)
          
 if __name__ == '__main__':
     unittest.main()

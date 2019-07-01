@@ -4,6 +4,7 @@
     This method gets the kernels needed for a given operations in the order they are called by the overall program and returns a meta-kernel of them. 
 
 """
+from PyQt5.Qt import QGeoSatelliteInfo
 '''Function to get mission name from target object name 
     Parameters:  
     target - user input
@@ -184,6 +185,28 @@ def getKernels(mission, functionName, time):
         ftp.retrbinary('RETR ' +generic_spk, file.write)
         #get generic planetary and solar system kernels    
         kernels.append(generic_spk)
+        #go back a directory
+        ftp.cwd('../')
+#REALLY NEED TO WRITE SOME IF STATEMENTS BASED ON WHAT THE TARGET IS - MAYBE 'classifyTarget' function
+        ftp.cwd('satellites/')
+        files = ftp.nlst()
+        satellite_spk = []
+#get saturninan kernels - NEED TO WRITE IF STATEMENTS ! THIS IS SPECIFIC CASE !
+        for file in files:
+            if 'sat' in file and file.endswith('.bsp'):
+                satellite_spk.append(file)
+        for spk in satellite_spk:
+            path_vals.append(spk)
+            #check if kernel exists already, if not - create it
+            if not os.path.exists(spk):
+                #open local file -- need to use os for an individualized path name
+                file = open(spk,'wb')
+            else: #if so - delete and create it
+                os.remove(spk)
+                file = open(spk,'wb')
+            #write kernel to local file
+            ftp.retrbinary('RETR ' +spk, file.write)
+            kernels.append(spk)
         #filename depends on function - check function name
         if functionName is 'getVectorFromSpaceCraftToTarget':
             #set filename for metakernel

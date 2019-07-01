@@ -52,20 +52,22 @@ class GetKernelsTest(unittest.TestCase):
         self.assertMultiLineEqual(first, second)
         
 class TimeConvertsTest(unittest.TestCase):
-    def test_UTC2ET(self):
+    def test_UTC2time(self):
         time = '2004-06-11T19:32:00'
         target = 'Phoebe'
         result = 140254384.184625
         self.assertAlmostEqual(UTC2ET(time, target), result, 4)
               
-    def test_SCLK2ET(self):
+    def test_SCLK2time(self):
         timeStr = '1465674964.105'
         target = 'Phoebe'
         result = 140254384.183426
         self.assertAlmostEqual(SCLK2ET(timeStr, target), result, 4)
             
-    def test_ET2Date(self):
-        ET = 140254384.184625
+    def test_time2Date(self):
+        time = 140254384.184625
+        target = 'Phoebe'
+        ET = UTC2ET(time, target)
         self.assertAlmostEqual(ET2Date(ET), '2004 JUN 11 19:33:04.184')
             
     def test_UTC2SPKKernelDate(self):
@@ -85,24 +87,21 @@ class GeometryAndTimeCnvtTest(unittest.TestCase):
     def test_getVectorFromSpaceCraftToTarget(self):
         time = '2004-06-11T19:32:00'
         target = 'Phoebe'
-        ET = UTC2ET(time, target)
         comp_vector = np.array([ -376599061.916539, 1294487780.929154, -7064853.054698])
-        self.assertAlmostEqual(getVectorFromSpaceCraftToTarget(ET, target).all(), comp_vector.all(), 4)
+        self.assertAlmostEqual(getVectorFromSpaceCraftToTarget(time, target).all(), comp_vector.all(), 4)
            
     def test_getVectorFromCraftToSun(self):
         time = '2004-06-11T19:32:00'
         target = 'Phoebe'
-        ET = UTC2ET(time, target)
-        pos_vector = getVectorFromSpaceCraftToTarget(ET, target)
+        pos_vector = getVectorFromSpaceCraftToTarget(time, target)
         comp_vector = np.array([-0.290204, 0.881631, 0.372167])
-        self.assertAlmostEqual(getVectorFromSpaceCraftToSun(ET, target, pos_vector).all(), comp_vector.all(), 4)
+        self.assertAlmostEqual(getVectorFromSpaceCraftToSun(time, target, pos_vector).all(), comp_vector.all(), 4)
            
     def test_getTargetSunDistance(self):
         time = '2004-06-11T19:32:00'
         target = 'Phoebe'
-        ET = UTC2ET(time, target)
-        pos_vector = getVectorFromSpaceCraftToTarget(ET, target)
-        sunDir_vector = getVectorFromSpaceCraftToSun(ET, target, pos_vector)
+        pos_vector = getVectorFromSpaceCraftToTarget(time, target)
+        sunDir_vector = getVectorFromSpaceCraftToSun(time, target, pos_vector)
         distance_vector = sunDir_vector+pos_vector
         distance = 9.4769 #Astronomical Units
            
@@ -111,12 +110,11 @@ class GeometryAndTimeCnvtTest(unittest.TestCase):
     def test_getAngularSeparation(self):
         time = '2004-06-11T19:32:00'
         target = 'Phoebe'
-        ET = UTC2ET(time, target)
-        pos_vector = getVectorFromSpaceCraftToTarget(ET, target)
-        sunDir_vector = getVectorFromSpaceCraftToSun(ET, target,pos_vector)
+        pos_vector = getVectorFromSpaceCraftToTarget(time, target)
+        sunDir_vector = getVectorFromSpaceCraftToSun(time, target,pos_vector)
         distance_vector = pos_vector + sunDir_vector
         comp_val = 71.924
-        self.assertAlmostEqual(getAngularSeparation(ET, target, distance_vector), comp_val, 4)
+        self.assertAlmostEqual(getAngularSeparation(time, target, distance_vector), comp_val, 4)
 
 
 class SpectralCalibrationTest(unittest.TestCase):     
@@ -124,28 +122,27 @@ class SpectralCalibrationTest(unittest.TestCase):
     def test_fluxDistanceRelationship(self):
         target = 'Phoebe'
         time = '2004-06-11T19:32:00'
-        ET = UTC2ET(time, target)
           
         url = getURL('irradiance','wavelength',None, None, 180, 300, '2010-03-20', '2010-03-24')
         data = requests.get(url).json()
           
-        pos_vector = getVectorFromSpaceCraftToTarget(ET, target)
+        pos_vector = getVectorFromSpaceCraftToTarget(time, target)
           
-        sunDir_vector = getVectorFromSpaceCraftToSun(ET, target, pos_vector)
+        sunDir_vector = getVectorFromSpaceCraftToSun(time, target, pos_vector) 
         distance_vector = sunDir_vector+pos_vector
           
         distance = getTargetSunDistance(distance_vector)
         self.assertAlmostEqual(fluxDistanceRelationship(data, distance), 0.00)
         
-    def test_periodicAnalysis(self):
-        timeLow = '2005-02-25'
-        timeHigh = '2008-02-25'
-        url = getURL('irradiance','wavelength', 'time', 'sorce_ssi_l3', 121 , 122, timeLow, timeHigh)
-        print(url)
-        solar_data = requests.get(url).json()
-        day_delta = getNumberOfDaysBetween(timeLow, timeHigh)
-          
-        periodicAnalysis(solar_data, day_delta)
+#     def test_periodicAnalysis(self):
+#         timeLow = '2005-02-25'
+#         timeHigh = '2008-02-25'
+#         url = getURL('irradiance','wavelength', 'time', 'sorce_ssi_l3', 121 , 122, timeLow, timeHigh)
+#         print(url)
+#         solar_data = requests.get(url).json()
+#         day_delta = getNumberOfDaysBetween(timeLow, timeHigh)
+#           
+#         periodicAnalysis(solar_data, day_delta)
      
     def test_sunFaceCorrection(self):
         target = 'Phoebe'
@@ -153,16 +150,9 @@ class SpectralCalibrationTest(unittest.TestCase):
         pos_vector = getVectorFromSpaceCraftToTarget(time, target)
         sunDir_vector = getVectorFromSpaceCraftToSun(time, target, pos_vector)
         distance_vector = sunDir_vector+pos_vector
-        
-        timeLow = '2005-02-25'
-        timeHigh = '2008-02-25'
-        url = getURL('irradiance','wavelength', 'time', 'sorce_ssi_l3', 121 , 122, timeLow, timeHigh)
         ang_sep = getAngularSeparation(time, target, distance_vector)
-        solar_data = requests.get(url).json()
-        days = getNumberOfDaysBetween(timeLow, timeHigh)
-        coeffs = periodicAnalysis(solar_data, days) 
-        
-        ang_corr = sunFaceCorrection(ang_sep,coeffs,time)
+
+        ang_corr = sunFaceCorrection(ang_sep,time)
          
 if __name__ == '__main__':
     unittest.main()

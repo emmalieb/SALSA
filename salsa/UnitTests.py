@@ -144,16 +144,6 @@ class SpectralCalibrationTest(unittest.TestCase):
           
         distance = getTargetSunDistance(distance_vector)
         self.assertAlmostEqual(fluxDistanceRelationship(data, distance), 0.00)
-
-#     def test_periodicAnalysis(self):
-#         timeLow = '2005-02-25'
-#         timeHigh = '2008-02-25'
-#         url = getURL('irradiance','wavelength', 'time', 'sorce_ssi_l3', 121 , 122, timeLow, timeHigh)
-#         print(url)
-#         solar_data = requests.get(url).json()
-#         day_delta = getNumberOfDaysBetween(timeLow, timeHigh)
-#           
-#         periodicAnalysis(solar_data, day_delta)
      
     def test_sunFaceCorrection(self):
         target = 'Phoebe'
@@ -161,6 +151,8 @@ class SpectralCalibrationTest(unittest.TestCase):
         pos_vector = getVectorFromSpaceCraftToTarget(time, target)
         sunDir_vector = getVectorFromSpaceCraftToSun(time, target, pos_vector)
         distance_vector = sunDir_vector+pos_vector
+        print("Distance vector between Sun and Target (km) :")
+        print(distance_vector)
         ang_sep = getAngularSeparation(time, target, distance_vector)
 
         ang_corr = sunFaceCorrection(ang_sep,time)

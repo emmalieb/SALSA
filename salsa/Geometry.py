@@ -68,7 +68,7 @@ def getVectorFromSpaceCraftToTarget(time, target):
 #     #need position vector to calculate distance vector in order to calculate true distance
 #     getVectorFromSpaceCraftToSun(ET, target, pos_vector)
     
-    print('Apparent state of '+target+' as seen from '+mission+' in the '+frame+' fixed-body frame (km, km/s):')
+    print('Apparent state of '+target+' as seen from '+mission+' in the '+frame+' fixed-body frame (km):')
     print('x_pos = {:16.3f}'.format(state[0]))
     print('y_pos = {:16.3f}'.format(state[1]))
     print('z_pos = {:16.3f}'.format(state[1]))
@@ -115,7 +115,7 @@ def getVectorFromSpaceCraftToSun(time, target, pos_vector):
 #     getAngularSeparation(ET, target, distance_vector)
 #     getTargetSunDistance(distance_vector)
     
-    print('Apparent direction of '+target+' as seen from the Sun in the '+frame+' fixed-body frame (km, km/s):')
+    print('Apparent direction of '+target+' as seen from the Sun in the '+frame+' fixed-body frame (km):')
     print('x_dir = {:16.3f}'.format(sundirection[0]))
     print('y_dir = {:16.3f}'.format(sundirection[1]))
     print('z_dir = {:16.3f}'.format(sundirection[2]))
@@ -171,7 +171,7 @@ def getVelocityVectorOfSpaceCraft(time, target):
     #need position vector to calculate distance vector in order to calculate true distance
     #getVectorFromSpaceCraftToSun(ET, target, pos_vector)
     
-    print('Apparent state of '+target+' as seen from '+mission+' in the '+frame+' fixed-body frame (km, km/s):')
+    print('Apparent state of '+target+' as seen from '+mission+' in the '+frame+' fixed-body frame (km/s):')
     print('x_vel = {:16.3f}'.format(state[3]))
     print('y_vel = {:16.3f}'.format(state[4]))
     print('z_vel = {:16.3f}'.format(state[5]))
@@ -198,13 +198,13 @@ def getAngularSeparation(time, target, dist_vector):
     #load kernels
     spice.furnsh(metakernel)
     #define objects needed for position function - EARTH 2 SUN
-    target = 'EARTH'
+    earth = 'EARTH'
     frame  = 'J2000'
     correction = 'LT+S'
     observer = 'SUN'
     
     #compute direction from Earth to Sun
-    [sundirection, lighttime ]= spice.spkpos(target, ET, frame, correction, observer)
+    [sundirection, lighttime ]= spice.spkpos(earth, ET, frame, correction, observer)
     
     X = sundirection[0]
     Y = sundirection[1]

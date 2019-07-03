@@ -10,6 +10,7 @@ from salsa.GetKernels import *
 from salsa.DataQuery import *
 from salsa.SpectralCalibration import *
 
+
 class DataQueryTest(unittest.TestCase):
     def test_getURL(self):
         primaryParameter = 'irradiance'
@@ -28,11 +29,21 @@ class GetKernelsTest(unittest.TestCase):
         target = 'Phoebe'
         self.assertEqual(getMissionFromTarget(target), "CASSINI")
     def test_getKernels(self):
+        import cProfile, pstats, io
+        from pstats import SortKey
+        pr = cProfile.Profile()
+        pr.enable()
         time = '2004-06-11T19:32:00'
         target = 'Phoebe'
         functionName = 'getVelocityVectorOfSpaceCraft'
-        self.assertEqual(getKernels(target, functionName, time), ['naif0008.tls','cas00172.tsc','040615AP_PE_04167_04186.bsp','040615AP_SCPSE_04167_04186.bsp','040615AP_SE_04167_04186.bsp','040615AP_SK_04167_04186.bsp','04163_04165pa_itl.bc','de430.bsp', 'cas_v41.tf'])
-            
+        self.assertEqual(getKernels('CASSINI', functionName, time), ['naif0008.tls','cas00172.tsc','040615AP_PE_04167_04186.bsp','040615AP_SCPSE_04167_04186.bsp','040615AP_SE_04167_04186.bsp','040615AP_SK_04167_04186.bsp','04163_04165pa_itl.bc','de430.bsp', 'cas_v41.tf'])
+        pr.disable()
+        s = io.StringIO()
+        sortby = SortKey.CUMULATIVE
+        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps.print_stats()
+        print(s.getvalue())
+        
     def test_writeMetaKernel(self):
         dir = '../../SALSA/test_kernels/'
         path_vals = 'kernels/LSK/'
@@ -58,11 +69,11 @@ class TimeConvertsTest(unittest.TestCase):
         result = 140254384.184625
         self.assertAlmostEqual(UTC2ET(time, target), result, 4)
               
-    def test_SCLK2time(self):
-        timeStr = '1465674964.105'
-        target = 'Phoebe'
-        result = 140254384.183426
-        self.assertAlmostEqual(SCLK2ET(timeStr, target), result, 4)
+#     def test_SCLK2time(self):
+#         timeStr = '1465674964.105'
+#         target = 'Phoebe'
+#         result = 140254384.183426
+#         self.assertAlmostEqual(SCLK2ET(timeStr, target), result, 4)
             
     def test_time2Date(self):
         time = 140254384.184625
@@ -133,7 +144,7 @@ class SpectralCalibrationTest(unittest.TestCase):
           
         distance = getTargetSunDistance(distance_vector)
         self.assertAlmostEqual(fluxDistanceRelationship(data, distance), 0.00)
-        
+
 #     def test_periodicAnalysis(self):
 #         timeLow = '2005-02-25'
 #         timeHigh = '2008-02-25'

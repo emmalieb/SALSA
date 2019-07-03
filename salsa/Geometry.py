@@ -53,6 +53,7 @@ def getVectorFromSpaceCraftToTarget(time, target):
     frame = 'IAU_'+ target.upper()
     correction = 'LT+S' #NOTE ABOVE
     observer = mission
+    
 
     #compute state of space craft relative to object
     [state, lighttime] = spice.spkezr(target, ET, frame, correction, observer)

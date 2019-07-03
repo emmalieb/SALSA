@@ -54,6 +54,8 @@ def getMissionFromTarget(target):
     
     return mission
 
+
+
 '''Function to get mission name from target object name 
     Parameters:  
     target - user input
@@ -119,7 +121,7 @@ def getKernels(mission, functionName, time):
         elif functionName is 'UTC2ET':
             filename = 'utc2et_mk.tm'
         #load the kernels from here into metakernel
-        metaKernel = writeMetaKernel(path_vals, kernels, filename, mission)
+        metaKernel = writeMetaKernel( kernels, filename, mission)
          
     elif functionName is 'getVectorFromSpaceCraftToTarget' or functionName is 'getVectorFromSpaceCraftToSun':
         #create kernels list
@@ -166,6 +168,25 @@ def getKernels(mission, functionName, time):
             #write kernel to local file
             ftp.retrbinary('RETR ' +spk_kernel, file.write)
             kernels.append(spk_kernel)
+        #go back one directory
+        ftp.cwd('../')
+        #go  into pck directory
+        ftp.cwd('pck/')
+        #get files
+        files = ftp.nlst()
+        #get pck kernels 
+        pck_kernel = getPCK(files, time)
+        #check if kernel exists already, if not - create it
+        if not os.path.exists(pck_kernel):
+            #open local file -- need to use os for an individualized path name
+            file = open(pck_kernel,'w')
+        else: #if so - delete and create it
+            os.remove(pck_kernel)
+            file = open(pck_kernel,'w')
+        #write kernel to local file
+        ftp.retrlines('RETR ' +pck_kernel, append_newline)
+        #back out of spk/kernels/mission folder
+        kernels.append(pck_kernel)
         #back out of spk/kernels/mission folder
         ftp.cwd('../../../')
         #go into 'generic kernels' folder for spk kernels
@@ -190,13 +211,10 @@ def getKernels(mission, functionName, time):
 #REALLY NEED TO WRITE SOME IF STATEMENTS BASED ON WHAT THE TARGET IS - MAYBE 'classifyTarget' function
         ftp.cwd('satellites/')
         files = ftp.nlst()
-        satellite_spk = []
-#get saturninan kernels - NEED TO WRITE IF STATEMENTS ! THIS IS SPECIFIC CASE !
-        for file in files:
-            if 'sat' in file and file.endswith('.bsp'):
-                satellite_spk.append(file)
+        satellite_spk = getSatelliteKernels(files, mission)
+        #loop through kernels
         for spk in satellite_spk:
-            path_vals.append(spk)
+            path_vals.append('kernels/spk')
             #check if kernel exists already, if not - create it
             if not os.path.exists(spk):
                 #open local file -- need to use os for an individualized path name
@@ -215,7 +233,7 @@ def getKernels(mission, functionName, time):
             #set filename for metakernel
             filename = 'craftSunVector_mk.tm'
         #load the kernels from here into metakernel
-        metaKernel = writeMetaKernel(path_vals, kernels, filename, mission)
+        metaKernel = writeMetaKernel( kernels, filename, mission)
         
     elif functionName is 'getVelocityVectorOfSpaceCraft' or functionName is 'getSubCraftVector' or functionName is 'getSubSolarVector' or functionName is 'getAngularSeparation':
         #create kernels list
@@ -236,7 +254,7 @@ def getKernels(mission, functionName, time):
             os.remove(lsk_kernel)
             file = open(lsk_kernel,'w')
         #write kernel to local file
-        ftp.retrlines('RETR '+leap_kernel, append_newline)
+        ftp.retrlines('RETR '+lsk_kernel, append_newline)
         #add lsk to path values for metakernel
         path_vals.append('kernels/lsk')
         #get kernel filenames 
@@ -262,7 +280,7 @@ def getKernels(mission, functionName, time):
         #write kernel over to local file
         ftp.retrlines('RETR ' +sclk_kernel, append_newline)
         #add this kenrel to kernels list for meta kernel
-        kernels = [leap_kernel, sclk_kernel]
+        kernels = [lsk_kernel, sclk_kernel]
         #go back a directory 
         ftp.cwd('../')
         #go into SPK directory
@@ -317,14 +335,32 @@ def getKernels(mission, functionName, time):
         #check if kernel exists already, if not - create it
         if not os.path.exists(fk_kernel):
             #open local file -- need to use os for an individualized path name
-            file = open(fk_kernel,'wb')
+            file = open(fk_kernel,'w')
         else: #if so - delete and create it
             os.remove(fk_kernel)
-            file = open(fk_kernel,'wb')
+            file = open(fk_kernel,'w')
         #write kernel to local file
-        ftp.retrbinary('RETR ' +fk_kernel, file.write)
+        ftp.retrlines('RETR ' +fk_kernel, append_newline)
         kernels.append(fk_kernel)
+        #go back one directory
+        ftp.cwd('../')
+        #go  into pck directory
+        ftp.cwd('pck/')
+        #get files
+        files = ftp.nlst()
+        #get pck kernels 
+        pck_kernel = getPCK(files, time)
+        #check if kernel exists already, if not - create it
+        if not os.path.exists(pck_kernel):
+            #open local file -- need to use os for an individualized path name
+            file = open(pck_kernel,'w')
+        else: #if so - delete and create it
+            os.remove(pck_kernel)
+            file = open(pck_kernel,'w')
+        #write kernel to local file
+        ftp.retrlines('RETR ' +pck_kernel, append_newline)
         #back out of spk/kernels/mission folder
+        kernels.append(pck_kernel)
         ftp.cwd('../../../')
         #go into 'generic kernels' folder for spk kernels
         ftp.cwd('generic_kernels/spk/planets/')
@@ -343,7 +379,25 @@ def getKernels(mission, functionName, time):
         ftp.retrbinary('RETR ' +generic_spk, file.write)
         #get generic planetary and solar system kernels    
         kernels.append(generic_spk)
-
+        #go back a directory
+        ftp.cwd('../')
+#REALLY NEED TO WRITE SOME IF STATEMENTS BASED ON WHAT THE TARGET IS - MAYBE 'classifyTarget' function
+        ftp.cwd('satellites/')
+        files = ftp.nlst()
+        satellite_spk = getSatelliteKernels(files, mission)
+        #loop through kernels
+        for spk in satellite_spk:
+            path_vals.append('kernels/spk')
+            #check if kernel exists already, if not - create it
+            if not os.path.exists(spk):
+                #open local file -- need to use os for an individualized path name
+                file = open(spk,'wb')
+            else: #if so - delete and create it
+                os.remove(spk)
+                file = open(spk,'wb')
+            #write kernel to local file
+            ftp.retrbinary('RETR ' +spk, file.write)
+            kernels.append(spk)
         #filename depends on function - check function name
         if functionName is 'getVelocityVectorOfSpaceCraft':
             #set filename for metakernel
@@ -354,16 +408,16 @@ def getKernels(mission, functionName, time):
         elif functionName is 'getSubSolarVector':
             #set filename for metakernel
             filename = 'subSolar_mk.tm'
-        elif functionName is 'getAnuglarSeparation':
+        elif functionName is 'getAngularSeparation':
             #set filename for metakernel
             filename = 'aungularSep_mk.tm'
         #load the kernels from here into metakernel
-        metaKernel = writeMetaKernel(path_vals, kernels, filename, mission)
+        metaKernel = writeMetaKernel( kernels, filename, mission)
     
-                
-    return metaKernel
     #say goodbye
     ftp.quit()
+                
+    return metaKernel
 
 '''Function to get SPK kernels
     SPK are ephemeris 
@@ -372,36 +426,27 @@ def getSPK(files, time):
     
     from salsa.TimeConversions import UTC2SPKKernelDate
     kernels = []
-    file_dates = []
+    kernel_dates = []
     #change UTC string to SPK date
-    date = datetime.strptime(time, '%Y-%m-%dT%H:%M:%S')
+    date = UTC2SPKKernelDate(time) #YYDOY
     #loop through files
     for file in files:
         #these indices are the dates
-        file_date = file[0:6]
-        #check if the date is a date - some files have weird strings instead of dates
-        if file_date.isdigit():
-            #format string into datetime object to check for nearest date
-            file_dates.append(datetime.strptime(file_date, '%y%m%d'))
+        file_list = file.split('_')
+        if len(file_list)>2:
+            if file_list[2].isdigit():
+                kernel_dates.append(file_list[2])
+            else:
+                continue
+        else:
+            continue
+    numbers = [int(x) for x in kernel_dates]
     #find closest date string to given date string        
-    nearest_date = min(file_dates, key=lambda x: abs(x - date))
-    #convert to kernel date format for finding filename 
-    nearest_date = UTC2SPKKernelDate(str(nearest_date))
-    #create array for more than one kernel of the same date
-    nearest_dates = []
-    #loop through files again to find files with nearest date 
+    nearest_date = min(numbers, key=lambda x: abs(x - int(date)))
     for file in files:
-        #check if the date is in the file
-        if nearest_date in file:
-            #if so, add it to the array for kernel filenames 
-            nearest_dates.append(file)
-    #convert to kernel date format for finding filename
-    date = UTC2SPKKernelDate(time)
-    for nearest_date in nearest_dates:
-        #find correct kernel dated file 
-        if nearest_date.endswith('.bsp'):
-            #set kernel to that file
-            kernels.append(nearest_date)
+        if str(nearest_date) in file and file.endswith('.bsp'):
+                #format string into datetime object to check for nearest date
+                kernels.append(file)
     return(kernels)
 
 '''Function to get CK kernels
@@ -431,22 +476,52 @@ def getFK(files):
             kernel = file
     return kernel
 # '''Function to get PCK kernels''' #TO DO: THERE ARE DIFFERENT PCK TYPES (spacecraft, and target) - MUST BE CALLED SEPARATELY FROM GET KERNELS 
-def getPCK(files, time, target):
-    
+def getPCK(files, time):
+    from bisect import bisect
     from salsa.TimeConversions import UTC2PCKKernelDate
-    kernel =''
-    date = UTC2PCKKernelDate(time, target)
+    target = 'Phoebe'
+    file_dates = []
+    file_list = []
+    date = datetime.strptime(time,'%Y-%m-%dT%H:%M:%S')
     #loop through files 
     for file in files:
-        #find the correct kernel
-        if date in file:
+        if file.startswith('cpck') and not file.startswith('cpck_rock'):
+            #find the kernel dates
+            file_date = file[4:13]
+            kernel_date = datetime.strptime(file_date,'%d%b%Y')
+            file_dates.append(kernel_date)
+            file_list.append(file)
+    #sort lists       
+    file_dates.sort()
+    file_list.sort()
+    
+    ind = bisect(file_dates, date, hi=len(file_dates)-1)
+    nearest = min(file_dates[ind], file_dates[ind-1],key=lambda x: abs(x - date))
+
+    nearest_date = UTC2PCKKernelDate(str(nearest), target)
+    for file in file_list:
+        if nearest_date in file:
             kernel = file
+    
     return kernel
+
 def getGenericKernels(files):
     for file in files:
         if 'de430.bsp' in file:
             kernel = file
     return kernel
+
+def getSatelliteKernels(files,mission):
+    kernels =[]
+    for file in files:
+        if mission is 'CASSINI' and file.startswith('sat') and file.endswith('.bsp'):
+            kernels.append(file)
+        if mission is 'MAVEN' and file.startswith('mar') and file.endswith('.bsp'):
+            kernels.append(file)
+        if mission is 'JUNO' and file.startswith('jup') and file.endswith('.bsp'):
+            kernels.append(file)
+        #TO DO - MAKE THIS MORE ROBUST FOR MORE PLANETS' MOONS
+    return kernels
 '''Function to construct and write a metakernel file from the kernels needed for each function
 Parameters: 
     path_vals - type of kernel passed in from getKernels
@@ -454,7 +529,7 @@ Parameters:
     filename - name for the metakernel file passed in from getKernels
     mission - mission passed in from getKernels, gotten from target name
 '''
-def writeMetaKernel(path_vals, kernels, filename, mission):
+def writeMetaKernel( kernels, filename, mission):
     #open file according to functionName
     mode = 'w'
     mkfile = open(filename, mode)
@@ -469,11 +544,11 @@ def writeMetaKernel(path_vals, kernels, filename, mission):
         mkfile.write(kernel+ "    "+kernelDscr+'\n')
     #open data block
     mkfile.write('\\begindata \n\n')
-    #write path values
-    mkfile.write('PATH_VALUES = (\n')
-    for val in path_vals:    
-        mkfile.write('\'{0}\'\n'.format(val))
-    mkfile.write(')\n\n')
+#     #write path values
+#     mkfile.write('PATH_VALUES = (\n')
+#     for val in path_vals:    
+#         mkfile.write('\'{0}\'\n'.format(val))
+#     mkfile.write(')\n\n')
     #write KERNELS TO LOAD
     mkfile.write('KERNELS_TO_LOAD = (\n')
     for kernel in kernels:
@@ -490,13 +565,16 @@ def kernelDescriptions(kernel, mission):
 
     if kernel == 'naif0008.tls':
         kernelDscr = 'Generic LSK'
-    elif kernel.endswith('.tsc'):
+    elif kernel.endswith('.bsp'):
         kernelDscr = mission+' Ephemeris SPK'
-    elif kernel == '*.tsc':
-        kernelDscr = mission+' SCLK'
-    elif kernel == '*.tpc':
+    elif kernel.startswith('sat'):
+        kernelDscr = 'Target Epehemeris SPK'
+    elif kernel.endswith('.tf'):
+        kernelDscr = mission+' FK'
+    elif kernel.endswith('.tpc'):
         kernelDscr = mission+' PCK'
-        
+    elif kernel.endswith('.bc'):
+        kernelDscr = mission+' CK'
     return kernelDscr
 
 

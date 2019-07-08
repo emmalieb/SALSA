@@ -90,7 +90,7 @@ def getVectorFromSpaceCraftToSun(time, target, pos_vector):
     #get mission named from target
     mission = getMissionFromTarget(target)
     #get metakernel
-    metakernel = getKernels(mission, 'getVectorFromSpaceCraftToTarget', time)
+    metakernel = getKernels(mission, 'getVectorFromSpaceCraftToSun', time)
     #load kernels
     spice.furnsh(metakernel)
     

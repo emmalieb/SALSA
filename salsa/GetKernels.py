@@ -138,11 +138,13 @@ def getKernels(mission, functionName, time):
         if not os.path.exists(lsk_kernel):
             #open local file -- need to use os for an individualized path name
             file = open(lsk_kernel,'w')
-        else: #if so - delete and create it
-            os.remove(lsk_kernel)
-            file = open(lsk_kernel,'w')
-        #write kernel to local file
-        ftp.retrlines('RETR '+lsk_kernel, append_newline)
+            #write kernel to local file
+            ftp.retrlines('RETR '+lsk_kernel, append_newline)
+            #get kernel filenames 
+            kernels.append(lsk_kernel)
+        else: #if so - add it
+            #get kernel filenames 
+            kernels.append(lsk_kernel)
         #add lsk to path values for metakernel
         path_vals.append('kernels/lsk')
         #get kernel filenames 
@@ -162,12 +164,11 @@ def getKernels(mission, functionName, time):
             if not os.path.exists(spk_kernel):
                 #open local file -- need to use os for an individualized path name
                 file = open(spk_kernel,'wb')
-            else: #if so - delete and create it
-                os.remove(spk_kernel)
-                file = open(spk_kernel,'wb')
-            #write kernel to local file
-            ftp.retrbinary('RETR ' +spk_kernel, file.write)
-            kernels.append(spk_kernel)
+                #write kernel to local file
+                ftp.retrbinary('RETR ' +spk_kernel, file.write)
+                kernels.append(spk_kernel)
+            else: #if so - add it
+                kernels.append(spk_kernel)
         #go back one directory
         ftp.cwd('../')
         #go  into pck directory
@@ -180,13 +181,12 @@ def getKernels(mission, functionName, time):
         if not os.path.exists(pck_kernel):
             #open local file -- need to use os for an individualized path name
             file = open(pck_kernel,'w')
-        else: #if so - delete and create it
-            os.remove(pck_kernel)
-            file = open(pck_kernel,'w')
-        #write kernel to local file
-        ftp.retrlines('RETR ' +pck_kernel, append_newline)
-        #back out of spk/kernels/mission folder
-        kernels.append(pck_kernel)
+            #write kernel to local file
+            ftp.retrlines('RETR ' +pck_kernel, append_newline)
+            #back out of spk/kernels/mission folder
+            kernels.append(pck_kernel)
+        else: #if so - add it
+            kernels.append(pck_kernel)
         #back out of spk/kernels/mission folder
         ftp.cwd('../../../')
         #go into 'generic kernels' folder for spk kernels
@@ -199,13 +199,12 @@ def getKernels(mission, functionName, time):
         if not os.path.exists(generic_spk):
             #open local file -- need to use os for an individualized path name
             file = open(generic_spk,'wb')
-        else: #if so - delete and create it
-            os.remove(generic_spk)
-            file = open(generic_spk,'wb')
-        #write kernel to local file
-        ftp.retrbinary('RETR ' +generic_spk, file.write)
-        #get generic planetary and solar system kernels    
-        kernels.append(generic_spk)
+            #write kernel to local file
+            ftp.retrbinary('RETR ' +generic_spk, file.write)
+            #get generic planetary and solar system kernels    
+            kernels.append(generic_spk)
+        else: #if so - add it
+            kernels.append(generic_spk)
         #go back a directory
         ftp.cwd('../')
 #REALLY NEED TO WRITE SOME IF STATEMENTS BASED ON WHAT THE TARGET IS - MAYBE 'classifyTarget' function
@@ -219,19 +218,13 @@ def getKernels(mission, functionName, time):
             if not os.path.exists(spk):
                 #open local file -- need to use os for an individualized path name
                 file = open(spk,'wb')
-            else: #if so - delete and create it
-                os.remove(spk)
-                file = open(spk,'wb')
-            #write kernel to local file
-            ftp.retrbinary('RETR ' +spk, file.write)
-            kernels.append(spk)
-        #filename depends on function - check function name
-        if functionName is 'getVectorFromSpaceCraftToTarget':
-            #set filename for metakernel
-            filename = 'targetCraftVector_mk.tm'
-        elif functionName is 'getVectorFromSpaceCraftToSun':
-            #set filename for metakernel
-            filename = 'craftSunVector_mk.tm'
+                #write kernel to local file
+                ftp.retrbinary('RETR ' +spk, file.write)
+                kernels.append(spk)
+            else: #if so - add it
+                kernels.append(spk)
+        #filename depends on function
+        filename = 'vectorGeometry_mk.tm'
         #load the kernels from here into metakernel
         metaKernel = writeMetaKernel( kernels, filename, mission)
         
@@ -250,15 +243,15 @@ def getKernels(mission, functionName, time):
         if not os.path.exists(lsk_kernel):
             #open local file -- need to use os for an individualized path name
             file = open(lsk_kernel,'w')
-        else: #if so - delete and create it
-            os.remove(lsk_kernel)
-            file = open(lsk_kernel,'w')
-        #write kernel to local file
-        ftp.retrlines('RETR '+lsk_kernel, append_newline)
-        #add lsk to path values for metakernel
-        path_vals.append('kernels/lsk')
-        #get kernel filenames 
-        kernels.append(lsk_kernel)
+            #write kernel to local file
+            ftp.retrlines('RETR '+lsk_kernel, append_newline)
+            #add lsk to path values for metakernel
+            path_vals.append('kernels/lsk')
+            #get kernel filenames 
+            kernels.append(lsk_kernel)
+        else: #if so -add it
+            #get kernel filenames 
+            kernels.append(lsk_kernel)
         #back out of lsk directory
         ftp.cwd('../')
         #go into sclk directory
@@ -274,13 +267,13 @@ def getKernels(mission, functionName, time):
         if not os.path.exists(sclk_kernel):
             #open local file -- need to use os for an individualized path name
             file = open(sclk_kernel,'w')
-        else: #if so - delete and create it
-            os.remove(sclk_kernel)
-            file = open(sclk_kernel,'w')
-        #write kernel over to local file
-        ftp.retrlines('RETR ' +sclk_kernel, append_newline)
-        #add this kenrel to kernels list for meta kernel
-        kernels = [lsk_kernel, sclk_kernel]
+            #write kernel over to local file
+            ftp.retrlines('RETR ' +sclk_kernel, append_newline)
+            #add this kernel to kernels list for meta kernel
+            kernels.append(sclk_kernel)
+        else: #if so -
+            #add this kernel to kernels list for meta kernel
+            kernels.append(sclk_kernel)
         #go back a directory 
         ftp.cwd('../')
         #go into SPK directory
@@ -296,12 +289,11 @@ def getKernels(mission, functionName, time):
             if not os.path.exists(spk_kernel):
                 #open local file -- need to use os for an individualized path name
                 file = open(spk_kernel,'wb')
-            else: #if so - delete and create it
-                os.remove(spk_kernel)
-                file = open(spk_kernel,'wb')
-            #write kernel to local file
-            ftp.retrbinary('RETR ' +spk_kernel, file.write)
-            kernels.append(spk_kernel)
+                #write kernel to local file
+                ftp.retrbinary('RETR ' +spk_kernel, file.write)
+                kernels.append(spk_kernel)
+            else: #if so - add it
+                kernels.append(spk_kernel)
         #go back a directory 
         ftp.cwd('../')
         #go into SPK directory
@@ -316,12 +308,11 @@ def getKernels(mission, functionName, time):
         if not os.path.exists(ck_kernel):
             #open local file -- need to use os for an individualized path name
             file = open(ck_kernel,'wb')
-        else: #if so - delete and create it
-            os.remove(ck_kernel)
-            file = open(ck_kernel,'wb')
-        #write kernel to local file
-        ftp.retrbinary('RETR ' +ck_kernel, file.write)
-        kernels.append(ck_kernel)
+            #write kernel to local file
+            ftp.retrbinary('RETR ' +ck_kernel, file.write)
+            kernels.append(ck_kernel)
+        else: #if so - add it
+            kernels.append(ck_kernel)
         #go back a directory 
         ftp.cwd('../')
         #go into SPK directory
@@ -336,12 +327,11 @@ def getKernels(mission, functionName, time):
         if not os.path.exists(fk_kernel):
             #open local file -- need to use os for an individualized path name
             file = open(fk_kernel,'w')
+            #write kernel to local file
+            ftp.retrlines('RETR ' +fk_kernel, append_newline)
+            kernels.append(fk_kernel)
         else: #if so - delete and create it
-            os.remove(fk_kernel)
-            file = open(fk_kernel,'w')
-        #write kernel to local file
-        ftp.retrlines('RETR ' +fk_kernel, append_newline)
-        kernels.append(fk_kernel)
+            kernels.append(fk_kernel)
         #go back one directory
         ftp.cwd('../')
         #go  into pck directory
@@ -354,13 +344,12 @@ def getKernels(mission, functionName, time):
         if not os.path.exists(pck_kernel):
             #open local file -- need to use os for an individualized path name
             file = open(pck_kernel,'w')
-        else: #if so - delete and create it
-            os.remove(pck_kernel)
-            file = open(pck_kernel,'w')
-        #write kernel to local file
-        ftp.retrlines('RETR ' +pck_kernel, append_newline)
+            #write kernel to local file
+            ftp.retrlines('RETR ' +pck_kernel, append_newline)
+            kernels.append(pck_kernel)
+        else: #if so - add it
+            kernels.append(pck_kernel)
         #back out of spk/kernels/mission folder
-        kernels.append(pck_kernel)
         ftp.cwd('../../../')
         #go into 'generic kernels' folder for spk kernels
         ftp.cwd('generic_kernels/spk/planets/')
@@ -372,16 +361,15 @@ def getKernels(mission, functionName, time):
         if not os.path.exists(generic_spk):
             #open local file -- need to use os for an individualized path name
             file = open(generic_spk,'wb')
-        else: #if so - delete and create it
-            os.remove(generic_spk)
-            file = open(generic_spk,'wb')
-        #write kernel to local file
-        ftp.retrbinary('RETR ' +generic_spk, file.write)
-        #get generic planetary and solar system kernels    
-        kernels.append(generic_spk)
+            #write kernel to local file
+            ftp.retrbinary('RETR ' +generic_spk, file.write)
+            #get generic planetary and solar system kernels    
+            kernels.append(generic_spk)
+        else: #if so - add it
+            kernels.append(generic_spk)
         #go back a directory
         ftp.cwd('../')
-#REALLY NEED TO WRITE SOME IF STATEMENTS BASED ON WHAT THE TARGET IS - MAYBE 'classifyTarget' function
+#REALLY NEED TO WRITE SOME IF STATEMENTS BASED ON WHAT THE TARGET IS - 'classifyTarget' function
         ftp.cwd('satellites/')
         files = ftp.nlst()
         satellite_spk = getSatelliteKernels(files, mission)
@@ -392,31 +380,18 @@ def getKernels(mission, functionName, time):
             if not os.path.exists(spk):
                 #open local file -- need to use os for an individualized path name
                 file = open(spk,'wb')
+                #write kernel to local file
+                ftp.retrbinary('RETR ' +spk, file.write)
+                kernels.append(spk)
             else: #if so - delete and create it
-                os.remove(spk)
-                file = open(spk,'wb')
-            #write kernel to local file
-            ftp.retrbinary('RETR ' +spk, file.write)
-            kernels.append(spk)
-        #filename depends on function - check function name
-        if functionName is 'getVelocityVectorOfSpaceCraft':
-            #set filename for metakernel
-            filename = 'craftVelocity_mk.tm'
-        elif functionName is 'getSubCraftVector':
-            #set filename for metakernel
-            filename = 'subCraft_mk.tm'
-        elif functionName is 'getSubSolarVector':
-            #set filename for metakernel
-            filename = 'subSolar_mk.tm'
-        elif functionName is 'getAngularSeparation':
-            #set filename for metakernel
-            filename = 'aungularSep_mk.tm'
+                kernels.append(spk)
+        #set filename
+        filename = 'complexGeometry_mk.tm'
         #load the kernels from here into metakernel
         metaKernel = writeMetaKernel( kernels, filename, mission)
     
     #say goodbye
     ftp.quit()
-                
     return metaKernel
 
 '''Function to get SPK kernels

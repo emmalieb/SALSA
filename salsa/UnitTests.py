@@ -10,7 +10,6 @@ from salsa.GetKernels import *
 from salsa.DataQuery import *
 from salsa.SpectralCalibration import *
 
-
 class DataQueryTest(unittest.TestCase):
     def test_getURL(self):
         primaryParameter = 'irradiance'
@@ -29,20 +28,21 @@ class GetKernelsTest(unittest.TestCase):
         target = 'Phoebe'
         self.assertEqual(getMissionFromTarget(target), "CASSINI")
     def test_getKernels(self):
-        import cProfile, pstats, io
-        from pstats import SortKey
-        pr = cProfile.Profile()
-        pr.enable()
+#         import cProfile, pstats, io
+#         from pstats import SortKey
+#         pr = cProfile.Profile()
+#         pr.enable()
         time = '2004-06-11T19:32:00'
         target = 'Phoebe'
         functionName = 'getVelocityVectorOfSpaceCraft'
-        self.assertEqual(getKernels('CASSINI', functionName, time), ['naif0008.tls','cas00172.tsc','040615AP_PE_04167_04186.bsp','040615AP_SCPSE_04167_04186.bsp','040615AP_SE_04167_04186.bsp','040615AP_SK_04167_04186.bsp','04163_04165pa_itl.bc','de430.bsp', 'cas_v41.tf'])
-        pr.disable()
-        s = io.StringIO()
-        sortby = SortKey.CUMULATIVE
-        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-        ps.print_stats()
-        print(s.getvalue())
+        getKernels('CASSINI', functionName, time)
+           
+#         pr.disable()
+#         s = io.StringIO()
+#         sortby = SortKey.CUMULATIVE
+#         ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+#         ps.print_stats()
+#         print(s.getvalue()) 
         
     def test_writeMetaKernel(self):
         dir = '../../SALSA/test_kernels/'
@@ -134,29 +134,49 @@ class SpectralCalibrationTest(unittest.TestCase):
         target = 'Phoebe'
         time = '2004-06-11T19:32:00'
           
-        url = getURL('irradiance','wavelength',None, None, 180, 300, '2010-03-20', '2010-03-24')
-        data = requests.get(url).json()
-          
         pos_vector = getVectorFromSpaceCraftToTarget(time, target)
           
         sunDir_vector = getVectorFromSpaceCraftToSun(time, target, pos_vector) 
         distance_vector = sunDir_vector+pos_vector
+        
+        ang_sep = getAngularSeparation(time, target, distance_vector)
+        data,waves = sunFaceCorrection(ang_sep, time)
           
         distance = getTargetSunDistance(distance_vector)
-        self.assertAlmostEqual(fluxDistanceRelationship(data, distance), 0.00)
+        flux_at_target = fluxDistanceRelationship(data,waves, distance)
+        
+        print('\n Solar Flux At Target:')
+        print(flux_at_target, waves)
+        
+        plotBeforeAfterDistCorr(data, waves, flux_at_target)
      
     def test_sunFaceCorrection(self):
+#         import cProfile, pstats, io
+#         from pstats import SortKey
+#         pr = cProfile.Profile()
+#         pr.enable()
+        
         target = 'Phoebe'
         time = '2004-06-11T19:32:00'
+        
         pos_vector = getVectorFromSpaceCraftToTarget(time, target)
         sunDir_vector = getVectorFromSpaceCraftToSun(time, target, pos_vector)
         distance_vector = sunDir_vector+pos_vector
+        
         print("Distance vector between Sun and Target (km) :")
         print(distance_vector)
+        
         ang_sep = getAngularSeparation(time, target, distance_vector)
 
-        ang_corr = sunFaceCorrection(ang_sep,time)
-         
+        solar_flux = sunFaceCorrection(ang_sep,time)
+        
+#         pr.disable()
+#         s = io.StringIO()
+#         sortby = SortKey.CUMULATIVE
+#         ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+#         ps.print_stats() 
+#         print(s.getvalue())  
+       
 if __name__ == '__main__':
     unittest.main()
         

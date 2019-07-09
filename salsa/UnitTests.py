@@ -130,7 +130,7 @@ class GeometryAndTimeCnvtTest(unittest.TestCase):
 
 class SpectralCalibrationTest(unittest.TestCase):     
         
-    def test_fluxDistanceRelationship(self):
+    def test_SolarSpectraCalibration(self):
         target = 'Phoebe'
         time = '2004-06-11T19:32:00'
           
@@ -140,22 +140,18 @@ class SpectralCalibrationTest(unittest.TestCase):
         distance_vector = sunDir_vector+pos_vector
         
         ang_sep = getAngularSeparation(time, target, distance_vector)
-        data,waves = sunFaceCorrection(ang_sep, time)
+        solar_flux, wavelengths = sunFaceCorrection(ang_sep, time)
           
         distance = getTargetSunDistance(distance_vector)
-        flux_at_target = fluxDistanceRelationship(data,waves, distance)
+        spectra_at_target = getFluxAtTarget(solar_flux, wavelengths, distance)
+        plotBeforeAfterDistCorr(solar_flux, wavelengths, spectra_at_target)
         
-        print('\n Solar Flux At Target:')
-        print(flux_at_target, waves)
+        convolved_spectrum = getConvolvedSolarSpectrum_CassiniUVIS(spectra_at_target, wavelengths)
         
-        plotBeforeAfterDistCorr(data, waves, flux_at_target)
+        plotConvolvedSpectrum(spectra_at_target,convolved_spectrum, wavelengths)
      
     def test_sunFaceCorrection(self):
-#         import cProfile, pstats, io
-#         from pstats import SortKey
-#         pr = cProfile.Profile()
-#         pr.enable()
-        
+
         target = 'Phoebe'
         time = '2004-06-11T19:32:00'
         
@@ -170,12 +166,6 @@ class SpectralCalibrationTest(unittest.TestCase):
 
         solar_flux = sunFaceCorrection(ang_sep,time)
         
-#         pr.disable()
-#         s = io.StringIO()
-#         sortby = SortKey.CUMULATIVE
-#         ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-#         ps.print_stats() 
-#         print(s.getvalue())  
        
 if __name__ == '__main__':
     unittest.main()

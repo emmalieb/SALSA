@@ -69,8 +69,8 @@ def sunFaceCorrection(angular_sep, time):
     print(sorce_time_backward, sorce_time_backward_range)
     
     #query solar spectra for both of these times
-    url_forward = getURL('irradiance','wavelength', None, None, 180, 300, sorce_time_forward, sorce_time_forward_range)
-    url_backward = getURL('irradiance','wavelength', None, None, 180, 300, sorce_time_backward, sorce_time_backward_range)
+    url_forward = getURL('irradiance','wavelength', None, None, 110, 180, sorce_time_forward, sorce_time_forward_range)
+    url_backward = getURL('irradiance','wavelength', None, None, 110, 180, sorce_time_backward, sorce_time_backward_range)
     
     #get data from urls and put into arrays
     data_forward = requests.get(url_forward).json()
@@ -97,8 +97,8 @@ def getFluxAtTarget(solar_flux, wavelengths, distance):
     square_factor = distance * distance
     #do the math
     flux_at_target = np.divide(solar_flux, square_factor)
-    
-    return(flux_at_target,wavelengths)
+
+    return(flux_at_target)
 
 def plotBeforeAfterDistCorr(solar_flux, wavelengths, flux_at_target):
     import matplotlib.pyplot as plt
@@ -123,25 +123,35 @@ def plotBeforeAfterDistCorr(solar_flux, wavelengths, flux_at_target):
     plt.ylabel('Ratio')
     plt.show()
 
-def getPSF_CassiniUVIS(coeffs,wave):
-    #NEED MORE EXPLANATION
-    func = coeffs[0]+ coeffs[1]**((-0.5*(wave-coeffs[2])**2)/coeffs[3]**2)+coeffs[4]/(1+1/coeffs[5](wave-coeffs[2]**2))
-    
-    #not sure how to code last term --> Xrect(x-a2/w)
+def getPSF(coeffs,wave):
+#check mission for what psf is needed - only return wanted psf
+    func = coeffs[0]+coeffs[1]*np.exp((-0.5*((wave-coeffs[2])**2.))/(coeffs[3]**2.))+((coeffs[4])/(1.+(1./coeffs[5])*(wave-coeffs[2])**2.))
     
     return(func)
-def getConvolvedSolarSpectrum_CassiniUVIS(spectra_at_target, wavelengths):
+def getConvolvedSolarSpectrum_CassiniUVIS(spectra_at_target, wavelengths): #,psf
     #these are the cassini uvis coefficients - WANT TO WRITE FUNCTION THAT GETS THESE DYNAMICALLY BUT MAY NOT HAVE ENOUGH TIME
-    coeffs = [0, 0.318, 121.569, 0.149, 0.00373, 1.507]
-    convolved_spectrum = []
-    #loop through wavelengths
-    for wave in wavelengths:
-        #convolving using lyman alpha
+    coeffs = np.array([0.0, 0.318, 121.569, 0.149, 0.00373, 1.507])
+    #create array for convolved spectrum
+    convolved_spectrum = np.zeros(shape=(len(wavelengths),))
+    
+    for i,wave in zip(range(0,len(wavelengths)),wavelengths):
         coeffs[2]=wave
         #get point spread function
-        psf = getPSF_CassiniUVIS(coeffs, wave)
+        psf = getPSF(coeffs, wavelengths)
+        psf = psf/np.sum(psf)
         #perform convolution
-        convolved_spectrum[wave] = signal.convolve(spectra_at_target, psf)
-        
-    #interpolate convolved spectra onto cassini UVIS wavelength grid
-    convolved_specrtrum = interpolate.interp1d(convolved_spectrum,wavelengths)
+        convolved_spectrum[i] = np.sum(spectra_at_target*psf)
+        #np.max(signal.convolve(spectra_at_target, psf))
+
+    
+    print(len(convolved_spectrum))
+    return(convolved_spectrum)
+
+def plotConvolvedSpectrum(spectra, convolved_spectrum, wavelengths):
+    
+    plt.plot(wavelengths,convolved_spectrum, marker = '.', color = 'y')
+    plt.plot(wavelengths,spectra)
+    plt.xlabel('Wavelengths')
+    plt.ylabel('Irradiance')
+    plt.title('Solstice Spectra Convolved onto Cassini UVIS Point Spread Function')
+    plt.show()

@@ -25,7 +25,7 @@ def UTC2ET(time, target):
     #get mission named from target
     mission = getMissionFromTarget(target) 
     #get metakernel
-    metakernel = getKernels(mission, 'UTC2ET',time) 
+    metakernel = getKernels(mission, target, 'UTC2ET',time) 
     #load kernels from metakernel
     spice.furnsh(metakernel) #THIS WILL BE METAKERNEL
     #convert time from UTC to ET

@@ -33,35 +33,38 @@ def getMissionFromTarget(target):
     elif target is 'venus' or target is 'Venus':
         mission = 'VEGA'
         
-    elif target is 'mars' or target is 'Mars':
+    elif target is 'Mars' or target is 'Phobos' or target is 'Desmos':
         mission = 'MAVEN'
     
-    elif target is 'jupiter' or target is 'Jupiter':
+    elif target is 'Jupiter' or target is 'Europa' or target is 'Io' or target is 'Ganymede' or target is 'Callisto':
         mission = 'JUNO'
     
-    elif target is 'saturn' or target is 'Saturn':
+    elif target is 'saturn' or target is 'Saturn' or target is 'Phoebe' or target is 'Mimas' or target is 'Tethys' or target is 'Titan' or target is "Dione" or target is "Hyperion" or target is "Enceladus":
         mission = 'CASSINI'
         
-    elif target is 'phoebe' or target is 'Phoebe':
-        mission = 'CASSINI'
-    #not really a target
-    elif target is 'pluto' or target is 'Pluto':
+    elif target is 'pluto' or target is 'Pluto' or target is 'Charon':
         mission = 'NEWHORIZONS'
-    
-    #really not a target
+
     elif target is 'moon' or target is'Moon':
         mission = 'LUNARORBITER'
     
     return mission
 
-
+def classifyTarget(target):
+    if target is 'Phobos' or target is 'Desmos' or target is 'Europa' or target is 'Io' or target is 'Ganymede' or target is 'Callisto' or target is 'Charon':
+        type = 'satellites'
+    elif target is 'Phoebe' or target is 'Mimas' or target is 'Tethys' or target is 'Titan' or target is "Dione" or target is "Hyperion" or target is "Enceladus":
+        type = "satellites"
+    elif target is 'Mercury' or target is 'Venus' or target is 'Jupiter' or target is 'Saturn' or target is 'Neptune' or target is 'Uranus' or target is 'Pluto':
+        type = 'planets'
+    return type
 
 '''Function to get mission name from target object name 
     Parameters:  
     target - user input
     functionName - passed in from functions that require the kernels
 '''
-def getKernels(mission, functionName, time):
+def getKernels(mission, target, functionName, time):
     #open ftp connection
     ftp = ftplib.FTP('naif.jpl.nasa.gov')
     ftp.login()
@@ -176,7 +179,7 @@ def getKernels(mission, functionName, time):
         #get files
         files = ftp.nlst()
         #get pck kernels 
-        pck_kernel = getPCK(files, time)
+        pck_kernel = getPCK(files, time, target)
         #check if kernel exists already, if not - create it
         if not os.path.exists(pck_kernel):
             #open local file -- need to use os for an individualized path name
@@ -187,10 +190,11 @@ def getKernels(mission, functionName, time):
             kernels.append(pck_kernel)
         else: #if so - add it
             kernels.append(pck_kernel)
+        type = classifyTarget(target)
         #back out of spk/kernels/mission folder
         ftp.cwd('../../../')
         #go into 'generic kernels' folder for spk kernels
-        ftp.cwd('generic_kernels/spk/planets/')
+        ftp.cwd('generic_kernels/spk/'+type+'/')
         #get file list
         files = ftp.nlst()
         #get generic spk kernel
@@ -208,21 +212,22 @@ def getKernels(mission, functionName, time):
         #go back a directory
         ftp.cwd('../')
 #REALLY NEED TO WRITE SOME IF STATEMENTS BASED ON WHAT THE TARGET IS - MAYBE 'classifyTarget' function
-        ftp.cwd('satellites/')
+        ftp.cwd(type+'/')
         files = ftp.nlst()
-        satellite_spk = getSatelliteKernels(files, mission)
-        #loop through kernels
-        for spk in satellite_spk:
-            path_vals.append('kernels/spk')
-            #check if kernel exists already, if not - create it
-            if not os.path.exists(spk):
-                #open local file -- need to use os for an individualized path name
-                file = open(spk,'wb')
-                #write kernel to local file
-                ftp.retrbinary('RETR ' +spk, file.write)
-                kernels.append(spk)
-            else: #if so - add it
-                kernels.append(spk)
+        if type is 'satellites':
+            satellite_spk = getSatelliteKernels(files, mission)
+            #loop through kernels
+            for spk in satellite_spk:
+                path_vals.append('kernels/spk')
+                #check if kernel exists already, if not - create it
+                if not os.path.exists(spk):
+                    #open local file -- need to use os for an individualized path name
+                    file = open(spk,'wb')
+                    #write kernel to local file
+                    ftp.retrbinary('RETR ' +spk, file.write)
+                    kernels.append(spk)
+                else: #if so - add it
+                    kernels.append(spk)
         #filename depends on function
         filename = 'vectorGeometry_mk.tm'
         #load the kernels from here into metakernel
@@ -320,7 +325,7 @@ def getKernels(mission, functionName, time):
         #get kernel filenames in directory
         files = ftp.nlst()
         #call get spk function with files -- THIS IS JUST THE SPACECRAFT SPK
-        fk_kernel = getFK(files)
+        fk_kernel = getFK(files, mission)
         #loop through spacecraft spk kernels
         path_vals.append('kernels/fk')
         #check if kernel exists already, if not - create it
@@ -339,7 +344,7 @@ def getKernels(mission, functionName, time):
         #get files
         files = ftp.nlst()
         #get pck kernels 
-        pck_kernel = getPCK(files, time)
+        pck_kernel = getPCK(files, time,target)
         #check if kernel exists already, if not - create it
         if not os.path.exists(pck_kernel):
             #open local file -- need to use os for an individualized path name
@@ -351,8 +356,9 @@ def getKernels(mission, functionName, time):
             kernels.append(pck_kernel)
         #back out of spk/kernels/mission folder
         ftp.cwd('../../../')
+        type = classifyTarget(target)
         #go into 'generic kernels' folder for spk kernels
-        ftp.cwd('generic_kernels/spk/planets/')
+        ftp.cwd('generic_kernels/spk/'+type+'/')
         #get file list
         files = ftp.nlst()
         #get generic spk kernel
@@ -369,22 +375,23 @@ def getKernels(mission, functionName, time):
             kernels.append(generic_spk)
         #go back a directory
         ftp.cwd('../')
-#REALLY NEED TO WRITE SOME IF STATEMENTS BASED ON WHAT THE TARGET IS - 'classifyTarget' function
-        ftp.cwd('satellites/')
+        ftp.cwd(type+'/')
         files = ftp.nlst()
-        satellite_spk = getSatelliteKernels(files, mission)
-        #loop through kernels
-        for spk in satellite_spk:
-            path_vals.append('kernels/spk')
-            #check if kernel exists already, if not - create it
-            if not os.path.exists(spk):
-                #open local file -- need to use os for an individualized path name
-                file = open(spk,'wb')
-                #write kernel to local file
-                ftp.retrbinary('RETR ' +spk, file.write)
-                kernels.append(spk)
-            else: #if so - delete and create it
-                kernels.append(spk)
+        
+        if type is 'satellites':
+            target_spk = getSatelliteKernels(files, mission)
+            #loop through kernels
+            for spk in target_spk:
+                path_vals.append('kernels/spk')
+                #check if kernel exists already, if not - create it
+                if not os.path.exists(spk):
+                    #open local file -- need to use os for an individualized path name
+                    file = open(spk,'wb')
+                    #write kernel to local file
+                    ftp.retrbinary('RETR ' +spk, file.write)
+                    kernels.append(spk)
+                else: #if so - delete and create it
+                    kernels.append(spk)
         #set filename
         filename = 'complexGeometry_mk.tm'
         #load the kernels from here into metakernel
@@ -442,19 +449,19 @@ def getCK(files, time):
 '''Function to get FK kernels
     FK are spacecraft reference frames
 '''
-def getFK(files):
+def getFK(files, mission):
     kernel = ''
     #loop through files 
     for file in files:
-        #find the correct kernel
-        if 'cas_v41.tf' in file:
-            kernel = file
+        if mission is 'CASSINI':
+            #find the correct kernel
+            if 'cas_v41.tf' in file:
+                kernel = file
     return kernel
 # '''Function to get PCK kernels''' #TO DO: THERE ARE DIFFERENT PCK TYPES (spacecraft, and target) - MUST BE CALLED SEPARATELY FROM GET KERNELS 
-def getPCK(files, time):
+def getPCK(files, time, target):
     from bisect import bisect
     from salsa.TimeConversions import UTC2PCKKernelDate
-    target = 'Phoebe'
     file_dates = []
     file_list = []
     date = datetime.strptime(time,'%Y-%m-%dT%H:%M:%S')

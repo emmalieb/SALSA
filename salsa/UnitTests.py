@@ -127,11 +127,11 @@ class GeometryAndTimeCnvtTest(unittest.TestCase):
         comp_val = 71.924
         self.assertAlmostEqual(getAngularSeparation(time, target, distance_vector), comp_val, 4)
 
-
+ 
 class SpectralCalibrationTest(unittest.TestCase):     
         
     def test_SolarSpectraCalibration(self):
-        target = 'Phoebe'
+        target = 'Saturn'
         time = '2004-06-11T19:32:00'
           
         pos_vector = getVectorFromSpaceCraftToTarget(time, target)
@@ -144,9 +144,9 @@ class SpectralCalibrationTest(unittest.TestCase):
           
         distance = getTargetSunDistance(distance_vector)
         spectra_at_target = getFluxAtTarget(solar_flux, wavelengths, distance)
-        plotBeforeAfterDistCorr(solar_flux, wavelengths, spectra_at_target)
+#         plotBeforeAfterDistCorr(solar_flux, wavelengths, spectra_at_target)
         
-        convolved_spectrum = getConvolvedSolarSpectrum_CassiniUVIS(spectra_at_target, wavelengths)
+        convolved_spectrum = getConvolvedSolarSpectrum(spectra_at_target, wavelengths,target)
         
         plotConvolvedSpectrum(spectra_at_target,convolved_spectrum, wavelengths)
      

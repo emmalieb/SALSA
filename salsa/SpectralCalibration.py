@@ -5,6 +5,7 @@ import scipy.signal as signal
 from scipy import interpolate
 import spiceypy as spice
 from matplotlib.pyplot import xlabel
+from networkx.algorithms.distance_measures import center
 
 
 '''Calculate solar rotation angle between Earth and given planet
@@ -69,8 +70,8 @@ def sunFaceCorrection(angular_sep, time):
     print(sorce_time_backward, sorce_time_backward_range)
     
     #query solar spectra for both of these times
-    url_forward = getURL('irradiance','wavelength', None, None, 110, 180, sorce_time_forward, sorce_time_forward_range)
-    url_backward = getURL('irradiance','wavelength', None, None, 110, 180, sorce_time_backward, sorce_time_backward_range)
+    url_forward = getURL('irradiance','wavelength', None, None, 110, 190, sorce_time_forward, sorce_time_forward_range)
+    url_backward = getURL('irradiance','wavelength', None, None, 110, 190, sorce_time_backward, sorce_time_backward_range)
     
     #get data from urls and put into arrays
     data_forward = requests.get(url_forward).json()
@@ -87,7 +88,7 @@ def sunFaceCorrection(angular_sep, time):
     solar_flux = weight_forward*irrad_forward + weight_back*irrad_backward
     wavelengths = np.array(df_forward[['wavelength']])
     
-    return(solar_flux, wavelengths)
+    return solar_flux, wavelengths
 
 """Compute flux at the distance of the given target 
     - follows an inverse square law
@@ -98,7 +99,7 @@ def getFluxAtTarget(solar_flux, wavelengths, distance):
     #do the math
     flux_at_target = np.divide(solar_flux, square_factor)
 
-    return(flux_at_target)
+    return flux_at_target
 
 def plotBeforeAfterDistCorr(solar_flux, wavelengths, flux_at_target):
     import matplotlib.pyplot as plt
@@ -123,29 +124,78 @@ def plotBeforeAfterDistCorr(solar_flux, wavelengths, flux_at_target):
     plt.ylabel('Ratio')
     plt.show()
 
-def getPSF(coeffs,wave):
+def getPSF(coeffs, wave, mission):
 #check mission for what psf is needed - only return wanted psf
-    func = coeffs[0]+coeffs[1]*np.exp((-0.5*((wave-coeffs[2])**2.))/(coeffs[3]**2.))+((coeffs[4])/(1.+(1./coeffs[5])*(wave-coeffs[2])**2.))
+    if mission is 'CASSINI':
+        func = coeffs[0]+coeffs[1]*np.exp((-0.5*((wave-coeffs[2])**2.))/(coeffs[3]**2.))+((coeffs[4])/(1.+(1./coeffs[5])*(wave-coeffs[2])**2.))
     
-    return(func)
-def getConvolvedSolarSpectrum_CassiniUVIS(spectra_at_target, wavelengths): #,psf
-    #these are the cassini uvis coefficients - WANT TO WRITE FUNCTION THAT GETS THESE DYNAMICALLY BUT MAY NOT HAVE ENOUGH TIME
-    coeffs = np.array([0.0, 0.318, 121.569, 0.149, 0.00373, 1.507])
-    #create array for convolved spectrum
-    convolved_spectrum = np.zeros(shape=(len(wavelengths),))
-    
-    for i,wave in zip(range(0,len(wavelengths)),wavelengths):
-        coeffs[2]=wave
-        #get point spread function
-        psf = getPSF(coeffs, wavelengths)
-        psf = psf/np.sum(psf)
-        #perform convolution
-        convolved_spectrum[i] = np.sum(spectra_at_target*psf)
-        #np.max(signal.convolve(spectra_at_target, psf))
+    elif mission is 'MAVEN':
+        x = np.linspace(0, 100, 101, dtype=np.int)
+        y = np.linspace(0, 100, 101, dtype=np.int)
+        z = np.zeros(shape=(101,101),dtype=np.double)
+        for i,j in zip(x,y): 
+            z[j,i] = np.sqrt((i-0)**2.+(j-50)**2.)
+        func = 1.*coeffs[0]*np.exp(-z*z/2./coeffs[1]/coeffs[1])+coeffs[2]/((z*z+coeffs[3]*coeffs[3]))+coeffs[4]
+    return func 
+def getConvolvedSolarSpectrum(spectra_at_target, wavelengths, target): 
+    from salsa.GetKernels import getMissionFromTarget
+    from bisect import bisect
+    #get mission name
+    mission = getMissionFromTarget(target)
+    if mission is 'CASSINI':
+#        these are the cassini uvis coefficients
+        coeffs = np.array([0.0, 0.318, 121.569, 0.149, 0.00373, 1.507])
+        #create array for convolved spectrum
+        convolved_spectrum = np.zeros(shape=(len(wavelengths),))
+        for i,wave in zip(range(0,len(wavelengths)),wavelengths):
+            coeffs[2]=wave
+            #get point spread function
+            psf = getPSF(coeffs, wavelengths,mission)
+            psf = psf/np.sum(psf)
+            #perform convolution
+            convolved_spectrum[i] = np.sum(spectra_at_target*psf)
 
+    elif mission is 'MAVEN':
+#        these are the maven iuvs coefficients
+        coeffs = np.array([0.295565,2.15489,3.00259,1.97700,-0.00239266])
+        #create wavelength array 
+        waves = np.linspace(110, 190, len(wavelengths), dtype=np.double)
+        for i,wave in zip(range(0,len(wavelengths)),waves):
+            #search new wavelength array for the wavelength that you want - the indices are the pixel and what should be passed into psf
+            ind = bisect(waves, wave, hi=len(waves)-1)
+            center_wave = min(waves[ind], waves[ind-1],key=lambda x: abs(x - wave))
+            pix = list(waves).index(center_wave)
+            #get point spread function
+            psf = getPSF(coeffs, pix, mission)
+            psf = psf[:,0]
+            #perform convolution
+            convolved_spectrum[i] = np.mean(spectra_at_target[pix-50:pix+50]*psf)
+         
+    return convolved_spectrum
+
+def getPlanetaryData(filename):
+    from astropy.io import fits
+    #read fits file
+    file = fits.open(filename)
+    #get data
+    data = file[1].data
     
-    print(len(convolved_spectrum))
-    return(convolved_spectrum)
+
+def unitConversion(data):
+    from astropy import units as u
+    #create units given from instrument
+    data_orig_units = data*(u.kR/u.angstrom)
+    #convert to solstice hi res units
+    data_solar_units = data_orig_units.to(u.Watt/u.m**2/u.nm, equivalence = u.spectral())
+    
+    return(data_solar_units)
+def getPlanetaryReflectance(solar_spectrum, planetary_spectrum):
+    #convert units
+    planetary_spectrum = unitConversion(planetary_spectrum)
+    #do ratio
+    reflectance = planetary_spectrum/solar_spectrum
+    
+    return reflectance
 
 def plotConvolvedSpectrum(spectra, convolved_spectrum, wavelengths):
     

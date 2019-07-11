@@ -37,7 +37,7 @@ def getVectorFromSpaceCraftToTarget(time, target):
     #get mission named from target
     mission = getMissionFromTarget(target) 
     #get metakernel
-    metakernel = getKernels(mission, 'getVectorFromSpaceCraftToTarget', time) 
+    metakernel = getKernels(mission, target,'getVectorFromSpaceCraftToTarget', time) 
     #load kernels
     spice.furnsh(metakernel)
     """
@@ -90,7 +90,7 @@ def getVectorFromSpaceCraftToSun(time, target, pos_vector):
     #get mission named from target
     mission = getMissionFromTarget(target)
     #get metakernel
-    metakernel = getKernels(mission, 'getVectorFromSpaceCraftToSun', time)
+    metakernel = getKernels(mission,target, 'getVectorFromSpaceCraftToSun', time)
     #load kernels
     spice.furnsh(metakernel)
     
@@ -148,7 +148,7 @@ def getVelocityVectorOfSpaceCraft(time, target):
     #get mission named from target
     mission = getMissionFromTarget(target) 
     #get metakernel
-    metakernel = getKernels(mission, 'getVectorFromSpaceCraftToTarget',time) 
+    metakernel = getKernels(mission, target, 'getVectorFromSpaceCraftToTarget',time) 
     #load kernels
     spice.furnsh(metakernel)
 
@@ -194,7 +194,7 @@ def getAngularSeparation(time, target, dist_vector):
     #get mission named from target
     mission = getMissionFromTarget(target)
     #get metakernel
-    metakernel = getKernels(mission, 'getAngularSeparation',time)
+    metakernel = getKernels(mission,target, 'getAngularSeparation',time)
     #load kernels
     spice.furnsh(metakernel)
     #define objects needed for position function - EARTH 2 SUN
@@ -236,7 +236,7 @@ def getSubCraftVector(time, target):
     #get mission named from target
     mission = getMissionFromTarget(target)
     #get metakernel
-    metakernel = getKernels(mission, 'getSubCraftAndSubSolarVectors',time)
+    metakernel = getKernels(mission, target, 'getSubCraftAndSubSolarVectors',time)
     #load kernels
     spice.furnsh(metakernel)
     
@@ -281,7 +281,7 @@ def getSubSolarVector(time, target):
     #get mission named from target
     mission = getMissionFromTarget(target)
     #get metakernel
-    metakernel = getKernels(mission, 'getSubSolarVector',time)
+    metakernel = getKernels(mission, target, 'getSubSolarVector',time)
     #load kernels
     spice.furnsh(metakernel)
     #define objects needed for position function - sub-SOLAR

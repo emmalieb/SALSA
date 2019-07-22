@@ -143,12 +143,16 @@ class SpectralCalibrationTest(unittest.TestCase):
         solar_flux, wavelengths = sunFaceCorrection(ang_sep, time)
           
         distance = getTargetSunDistance(distance_vector)
+        print(distance)
         spectra_at_target = getFluxAtTarget(solar_flux, wavelengths, distance)
-#         plotBeforeAfterDistCorr(solar_flux, wavelengths, spectra_at_target)
+        plotBeforeAfterDistCorr(solar_flux, wavelengths, spectra_at_target)
         
         convolved_spectrum = getConvolvedSolarSpectrum(spectra_at_target, wavelengths,target)
         
+        filename = 'FUV2005_247_20_15.fits'
         plotConvolvedSpectrum(spectra_at_target,convolved_spectrum, wavelengths)
+        data, wavelenths_ob = getPlanetaryData(filename, convolved_spectrum, wavelengths)
+        
      
     def test_sunFaceCorrection(self):
 

@@ -12,15 +12,11 @@ from salsa.SpectralCalibration import *
 
 class DataQueryTest(unittest.TestCase):
     def test_getURL(self):
-        primaryParameter = 'irradiance'
-        secondaryParameter = 'wavelength'
-        tertiaryParameter = 'NONE'
-        dataset = 'NONE'
-        wavelengthLow = '180'
-        wavelengthHigh = '300'
+        wavelengthLow = 110
+        wavelengthHigh = 300
         timeLow = '2010-03-20'
         timeHigh = '2010-03-24'
-        self.assertAlmostEqual(getURL(primaryParameter, secondaryParameter, tertiaryParameter, dataset, wavelengthLow, wavelengthHigh, timeLow, timeHigh), 0.00)
+        print(getURL(wavelengthLow, wavelengthHigh, timeLow, timeHigh))
 # 
         
 class GetKernelsTest(unittest.TestCase):

@@ -69,62 +69,19 @@ import json
 import requests
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-from salsa import *
 
 
-def getURL(primaryParameter, secondaryParameter, tertiaryParameter=None, dataset = None, wavelengthLow = None, wavelengthHigh = None, timeLow = None, timeHigh = None):
+def getURL(wavelengthLow, wavelengthHigh, timeLow, timeHigh):
     
     urlStart = 'http://lasp.colorado.edu/lisird/latis/dap/'
     suffix = '.json?'
-    url=''
+    primaryParameter = 'irradiance'
+    secondaryParameter = 'wavelength'
     
-    #If the user passed in a dataset name, an operation, and all three parameters, the URL is stitched together directly.
-    if dataset is not None and tertiaryParameter is not None:
-        url = urlStart+dataset+suffix+primaryParameter+','+secondaryParameter+','+tertiaryParameter
-            
-        #If the user also passed in a wavelength range, it it included in the URL
-        if wavelengthLow is not None and wavelengthHigh is not None:
-            url = urlStart+dataset+suffix+primaryParameter+','+secondaryParameter+','+tertiaryParameter+'&wavelength>='+str(wavelengthLow)+'&wavelength<='+str(wavelengthHigh)
-            
-            #If the user passed in a time range, it is included in the URL
-            if timeLow is not None and timeHigh is not None:
-                url = urlStart+dataset+suffix+primaryParameter+','+secondaryParameter+','+tertiaryParameter+'&wavelength>='+str(wavelengthLow)+'&wavelength<='+str(wavelengthHigh)+'&time>='+timeLow+'&time<='+timeHigh
+    dataset = findDataset(wavelengthLow, wavelengthHigh)
     
-    #If the user did not give a dataset name, but they did pass in a wavelength range and all three parameters, the wavelength range is used to find the dataset name and then the URL is stitched together directly.
-    elif wavelengthLow is not None and wavelengthHigh is not None and secondaryParameter is not None and tertiaryParameter is not None:
-        
-        #Call to function that finds the dataset name
-        foundDataset = findDataset(wavelengthLow, wavelengthHigh)
-        url = urlStart+foundDataset+suffix+primaryParameter+','+secondaryParameter+','+tertiaryParameter+'&wavelength>='+str(wavelengthLow)+'&wavelength<='+str(wavelengthHigh)
-    
-        #If the user passed in a time range, it is included in the URL
-        if timeLow is not None and timeHigh is not None:
-            url = urlStart+foundDataset+suffix+primaryParameter+','+secondaryParameter+','+tertiaryParameter+'&wavelength>='+str(wavelengthLow)+'&wavelength<='+str(wavelengthHigh)+'&time>='+timeLow+'&time<='+timeHigh
-    
-    #If the user passed in a dataset name, an operation, but only the Primary and Secondary parameters, the URL is stitched together directly excluding a Tertiary parameter
-    if dataset is not None and tertiaryParameter is None:
-        url = urlStart+dataset+suffix+str(primaryParameter)+str(secondaryParameter)
-        
-        #If the user also passed in a wavelength range, it it included in the URL without the Tertiary parameter
-        if wavelengthLow is not None and wavelengthHigh is not None:
-            url = urlStart+dataset+suffix+str(primaryParameter)+','+str(secondaryParameter)+'&wavelength>='+str(wavelengthLow)+'&wavelength<='+str(wavelengthHigh)
-            
-            #If the user passed in a time range, it is included in the URL without the Tertiary parameter
-            if timeLow is not None and timeHigh is not None:
-                url = urlStart+dataset+suffix+str(primaryParameter)+','+str(secondaryParameter)+'&wavelength>='+str(wavelengthLow)+'&wavelength<='+str(wavelengthHigh)+'&time>='+timeLow+'&time<='+timeHigh
-            
-    elif wavelengthLow is not None and wavelengthHigh is not None and tertiaryParameter is None:
-        
-        #Call function to find dataset name based on wavelengths given
-        foundDataset = findDataset(wavelengthLow, wavelengthHigh)
-        
-        url = urlStart+foundDataset+suffix+str(primaryParameter)+','+str(secondaryParameter)+'&wavelength>='+str(wavelengthLow)+'&wavelength<='+str(wavelengthHigh)
-    
-        #If the user passed in a time range, it is included in the URL without the tertiary parameter
-        if timeLow is not None and timeHigh is not None:
-            url = urlStart+foundDataset+suffix+str(primaryParameter)+','+str(secondaryParameter)+'&wavelength>='+str(wavelengthLow)+'&wavelength<='+str(wavelengthHigh)+'&time>='+timeLow+'&time<='+timeHigh
+    url = urlStart+dataset+suffix+primaryParameter+','+secondaryParameter+'&wavelength>='+str(wavelengthLow)+'&wavelength<='+str(wavelengthHigh)+'&time>='+timeLow+'&time<='+timeHigh
     
     return(url) 
  
@@ -135,8 +92,10 @@ Parameters:
 def findDataset(wavelengthLow, wavelengthHigh):
     
     #check the wavelength range given
-    if wavelengthLow > 110 and wavelengthHigh < 320:
+    if wavelengthLow >= 110 and wavelengthHigh <= 320:
         foundDataset = 'sorce_solstice_ssi_high_res'
+    elif wavelengthLow<=110 or wavelengthHigh >= 320:
+        foundDataset = 'sorce_ssi_l3' 
     
     return foundDataset
 

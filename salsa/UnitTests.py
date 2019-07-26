@@ -30,8 +30,8 @@ class GetKernelsTest(unittest.TestCase):
 #         pr.enable()
         time = '2004-06-11T19:32:00'
         target = 'Phoebe'
-        functionName = 'getVelocityVectorOfSpaceCraft'
-        getKernels('CASSINI', functionName, time)
+        functionName = 'getVectorFromSpaceCraftToTarget'
+        getKernels('CASSINI', target, functionName, time)
            
 #         pr.disable()
 #         s = io.StringIO()
@@ -41,7 +41,7 @@ class GetKernelsTest(unittest.TestCase):
 #         print(s.getvalue()) 
         
     def test_writeMetaKernel(self):
-        dir = '../../SALSA/test_kernels/'
+        dir = '../../SALSAFullRun/test_kernels/'
         path_vals = 'kernels/LSK/'
         kernels = ['naif0008.tls', 'cas00172.tsc']
         filename = dir+'test_writingmk.tm'
@@ -93,7 +93,7 @@ class GeometryAndTimeCnvtTest(unittest.TestCase):
        
     def test_getVectorFromSpaceCraftToTarget(self):
         time = '2004-06-11T19:32:00'
-        target = 'Phoebe'
+        target = 'Saturn'
         comp_vector = np.array([ -376599061.916539, 1294487780.929154, -7064853.054698])
         self.assertAlmostEqual(getVectorFromSpaceCraftToTarget(time, target).all(), comp_vector.all(), 4)
            

@@ -4,11 +4,7 @@
     This method gets the kernels needed for a given operations in the order they are called by the overall program and returns a meta-kernel of them. 
 
 """
-from PyQt5.Qt import QGeoSatelliteInfo
-'''Function to get mission name from target object name 
-    Parameters:  
-    target - user input
-'''
+
 import ftplib
 from ftplib import FTP
 import os
@@ -22,7 +18,10 @@ from salsa import *
 import spiceypy as spice
 from datetime import datetime
 
-
+'''Function to get mission name from target object name 
+    Parameters:  
+    target - user input
+'''
 def getMissionFromTarget(target):
     
     mission = ''
@@ -39,7 +38,7 @@ def getMissionFromTarget(target):
     elif target is 'Jupiter' or target is 'Europa' or target is 'Io' or target is 'Ganymede' or target is 'Callisto':
         mission = 'JUNO'
     
-    elif target is 'saturn' or target is 'Saturn' or target is 'Phoebe' or target is 'Mimas' or target is 'Tethys' or target is 'Titan' or target is "Dione" or target is "Hyperion" or target is "Enceladus":
+    elif target is 'saturn' or target == 'Saturn' or target is 'Phoebe' or target is 'Mimas' or target is 'Tethys' or target is 'Titan' or target is "Dione" or target is "Hyperion" or target is "Enceladus":
         mission = 'CASSINI'
         
     elif target is 'pluto' or target is 'Pluto' or target is 'Charon':
@@ -49,13 +48,16 @@ def getMissionFromTarget(target):
         mission = 'LUNARORBITER'
     
     return mission
-
+"""
+Function to get object type based on name of target
+    target - user inputted planetary object
+"""
 def classifyTarget(target):
     if target is 'Phobos' or target is 'Desmos' or target is 'Europa' or target is 'Io' or target is 'Ganymede' or target is 'Callisto' or target is 'Charon':
         obtype = 'satellites'
     elif target is 'Phoebe' or target is 'Mimas' or target is 'Tethys' or target is 'Titan' or target is "Dione" or target is "Hyperion" or target is "Enceladus":
         obtype = "satellites"
-    elif target is 'Mercury' or target is 'Venus' or target is 'Jupiter' or target is 'Saturn' or target is 'Neptune' or target is 'Uranus' or target is 'Pluto':
+    elif target is 'Mercury' or target is 'Venus' or target is 'Jupiter' or target == 'Saturn' or target is 'Neptune' or target is 'Uranus' or target is 'Pluto':
         obtype = 'planets'
     return obtype
 
@@ -74,11 +76,10 @@ def getKernels(mission, target, functionName, time):
     ftp.cwd(mission+'/')
     #go to kernels directory
     ftp.cwd('kernels/')
-
     #for formatting kernels correctly in local file - only for text kernels 
-    def append_newline(input):
-        file.write(input + "\n")
-        
+    def append_newline(inp):
+        file.write(inp + "\n")
+
     if functionName is 'SCLK2ET' or functionName is 'UTC2ET':
         #create kernels list
         kernels = []
@@ -89,17 +90,18 @@ def getKernels(mission, target, functionName, time):
         #get path values
         path_vals = 'kernels/lsk', 'kernels/sclk'
         lsk_kernel = files[2]
-        #check if kernel exists already, if not - create it
+        #check file exits
         if not os.path.exists(lsk_kernel):
             #open local file -- need to use os for an individualized path name
             file = open(lsk_kernel,'w')
-        else: #if so - delete and create it
-            os.remove(lsk_kernel)
-            file = open(lsk_kernel,'w')
-        #write kernel to local file
-        ftp.retrlines('RETR '+files[2], append_newline)
-        #get kernel filenames 
-        leap_kernel = files[2]
+            #write kernel to local file
+            ftp.retrlines('RETR '+lsk_kernel, append_newline)
+            #get kernel filenames 
+            kernels.append(lsk_kernel)
+        else: #if so - add it
+            #get kernel filenames 
+            kernels.append(lsk_kernel)
+
         #back out of lsk directory
         ftp.cwd('../')
         #go into sclk directory
@@ -112,12 +114,15 @@ def getKernels(mission, target, functionName, time):
         if not os.path.exists(sclk_kernel):
             #open local file -- need to use os for an individualized path name
             file = open(sclk_kernel,'w')
-        else: #if so - delete and create it
-            os.remove(sclk_kernel)
-            file = open(sclk_kernel,'w')
-        #get kernel filenames
-        ftp.retrlines('RETR ' +sclk_kernel, append_newline)
-        kernels = [leap_kernel,sclk_kernel]
+            #write kernel over to local file
+            ftp.retrlines('RETR ' +sclk_kernel, append_newline)
+            #add this kernel to kernels list for meta kernel
+            kernels.append(sclk_kernel)
+        else: #if so -
+            #add this kernel to kernels list for meta kernel
+            kernels.append(sclk_kernel)
+
+        kernels = [lsk_kernel,sclk_kernel]
         #set filename for metakernel
         if functionName is 'SCLK2ET':
             filename = 'sclk2et_mk.tm'
@@ -157,7 +162,7 @@ def getKernels(mission, target, functionName, time):
         #back out of spk/kernels/mission folder
         ftp.cwd('../../../')
         #go into 'generic kernels' folder for spk kernels
-        ftp.cwd('generic_kernels/spk/'+obtype+'/')
+        ftp.cwd('generic_kernels/spk/planets/')
         #get file list
         files = ftp.nlst()
         #get generic spk kernel
@@ -174,7 +179,6 @@ def getKernels(mission, target, functionName, time):
             kernels.append(generic_spk)
         #go back a directory
         ftp.cwd('../')
-#REALLY NEED TO WRITE SOME IF STATEMENTS BASED ON WHAT THE TARGET IS - MAYBE 'classifyTarget' function
         ftp.cwd(obtype+'/')
         files = ftp.nlst()
         if obtype is 'satellites':
@@ -286,7 +290,7 @@ def getKernels(mission, target, functionName, time):
         #back out of spk/kernels/mission folder
         ftp.cwd('../../../')
         #go into 'generic kernels' folder for spk kernels
-        ftp.cwd('generic_kernels/spk/'+obtype+'/')
+        ftp.cwd('generic_kernels/spk/planets/')
         #get file list
         files = ftp.nlst()
         #get generic spk kernel
@@ -303,7 +307,7 @@ def getKernels(mission, target, functionName, time):
             kernels.append(generic_spk)
         #go back a directory
         ftp.cwd('../')
-#REALLY NEED TO WRITE SOME IF STATEMENTS BASED ON WHAT THE TARGET IS - MAYBE 'classifyTarget' function
+        
         ftp.cwd(obtype+'/')
         files = ftp.nlst()
         if obtype is 'satellites':
@@ -461,13 +465,15 @@ def getFK(files, mission):
             if 'cas_v41.tf' in file:
                 kernel = file
     return kernel
-# '''Function to get PCK kernels''' #TO DO: THERE ARE DIFFERENT PCK TYPES (spacecraft, and target) - MUST BE CALLED SEPARATELY FROM GET KERNELS 
+'''Function to get PCK kernels
+    PCK are planetary constants
+'''
 def getPCK(files, time, target):
     from bisect import bisect
     from salsa.TimeConversions import UTC2PCKKernelDate
     file_dates = []
     file_list = []
-    date = datetime.strptime(time,'%Y-%m-%dT%H:%M:%S')
+    date = datetime.strptime(time,'%Y-%m-%d %H:%M:%S')
     #loop through files 
     for file in files:
         if file.startswith('cpck') and not file.startswith('cpck_rock'):
@@ -489,13 +495,18 @@ def getPCK(files, time, target):
             kernel = file
     
     return kernel
-
+"""
+Function to get generic solar system kernel
+"""
 def getGenericKernels(files):
     for file in files:
         if 'de430.bsp' in file:
             kernel = file
     return kernel
-
+"""
+Function to get satellite specific kernels 
+    (satellites = moons)
+"""
 def getSatelliteKernels(files,mission):
     kernels =[]
     for file in files:
@@ -529,12 +540,7 @@ def writeMetaKernel( kernels, filename, mission):
         mkfile.write(kernel+ "    "+kernelDscr+'\n')
     #open data block
     mkfile.write('\\begindata \n\n')
-#     #write path values
-#     mkfile.write('PATH_VALUES = (\n')
-#     for val in path_vals:    
-#         mkfile.write('\'{0}\'\n'.format(val))
-#     mkfile.write(')\n\n')
-    #write KERNELS TO LOAD
+
     mkfile.write('KERNELS_TO_LOAD = (\n')
     for kernel in kernels:
         mkfile.write('\'{0}\'\n'.format(kernel))
@@ -544,7 +550,10 @@ def writeMetaKernel( kernels, filename, mission):
     #say goodbye
     mkfile.close()
     
-'''Function to describe kernels by their type to be written into metakernel for readability'''
+'''
+Function to describe kernels by their type to be written into metakernel for readability
+
+'''
 def kernelDescriptions(kernel, mission):
     kernelDscr = ''
 

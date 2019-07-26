@@ -7,20 +7,18 @@ import spiceypy as spice
 from matplotlib.pyplot import xlabel
 from networkx.algorithms.distance_measures import center
 from dask.array.overlap import reflect
+import requests
+import pandas as pd
+import os
 
 
 '''Calculate solar rotation angle between Earth and given planet
 and determine optimal number of days for time shifting
 Earth-based irradiance to the planet
 '''
-def sunFaceCorrection(angular_sep, time):
+def sunFaceCorrection(angular_sep, time, waveLow, waveHigh):
     from datetime import datetime, timedelta
-    sorce_time = datetime.strptime(time, '%Y-%m-%dT%H:%M:%S')
-    
-#     if angular_sep > 180:
-#         angular_sep = angular_sep-360
-#     elif angular_sep < -180:
-#         angular_sep = angular_sep + 360
+    sorce_time = datetime.strptime(time, '%Y-%m-%d %H:%M:%S')
 
     degrees_of_rotation = 360 #degrees
     #period of rotation of sun 
@@ -71,18 +69,18 @@ def sunFaceCorrection(angular_sep, time):
     print(sorce_time_backward, sorce_time_backward_range)
     
     #query solar spectra for both of these times
-    url_forward = getURL('irradiance','wavelength', None, None, 110, 190, sorce_time_forward, sorce_time_forward_range)
-    url_backward = getURL('irradiance','wavelength', None, None, 110, 190, sorce_time_backward, sorce_time_backward_range)
+    url_forward = getURL(waveLow, waveHigh, sorce_time_forward, sorce_time_forward_range)
+    url_backward = getURL(waveLow, waveHigh, sorce_time_backward, sorce_time_backward_range)
     
     #get data from urls and put into arrays
     data_forward = requests.get(url_forward).json()
     data_backward = requests.get(url_backward).json()
     #create dataframe
-    df_forward = pd.DataFrame(data_forward["sorce_solstice_ssi_high_res"]["samples"][0]["samples"])
+    df_forward = pd.DataFrame(data_forward["sorce_solstice_ssi_high_res_template"]["samples"][0]["samples"])
     #get irradiance from data frame
     irrad_forward = np.array(df_forward[['irradiance']])
     #create data frame
-    df_backward = pd.DataFrame(data_backward["sorce_solstice_ssi_high_res"]["samples"][0]['samples'])
+    df_backward = pd.DataFrame(data_backward["sorce_solstice_ssi_high_res_template"]["samples"][0]['samples'])
     #get irradiance from data frame
     irrad_backward = np.array(df_backward[['irradiance']])
     #linearly combine both spectra with weights as coefficients
@@ -91,10 +89,11 @@ def sunFaceCorrection(angular_sep, time):
     
     return solar_flux, wavelengths
 
-"""Compute flux at the distance of the given target 
+"""
+Compute flux at the distance of the given target 
     - follows an inverse square law
 """   
-def getFluxAtTarget(solar_flux, wavelengths, distance):
+def getFluxAtTarget(solar_flux, distance):
     #square the distance to divide by later
     square_factor = distance * distance
     #do the math
@@ -116,15 +115,11 @@ def plotBeforeAfterDistCorr(solar_flux, wavelengths, flux_at_target):
     plt.xlabel('Wavelength (nm)')
     plt.ylabel('Irradiance (W/m**2/nm)')
     plt.show()
-    
-#     ratio = solar_flux/flux_at_target
-#     
-#     plt.plot(wavelengths, ratio, marker = '.', color = 'm')
-#     plt.title('Ratio of Solar Flux to Solar Flux at Target',fontsize=20)
-#     plt.xlabel('Wavelength')
-#     plt.ylabel('Ratio')
-#     plt.show()
+"""
+These are preset point spread functions
+    - compatible with Cassini UVIS and Maven IUVS
 
+"""
 def getPSF(coeffs, wave, mission):
 #check mission for what psf is needed - only return wanted psf
     if mission is 'CASSINI':
@@ -138,43 +133,87 @@ def getPSF(coeffs, wave, mission):
             z[j,i] = np.sqrt((i-0)**2.+(j-50)**2.)
         func = 1.*coeffs[0]*np.exp(-z*z/2./coeffs[1]/coeffs[1])+coeffs[2]/((z*z+coeffs[3]*coeffs[3]))+coeffs[4]
     return func 
-def getConvolvedSolarSpectrum(spectra_at_target, wavelengths, target): 
+"""
+Function to compute user specified point spread function
+Parameters: 
+    wavelengths - wavelengths of point spread function
+    values - points that describe point spread function
+    center_wave - the current solar wavelength 
+    solar_waves - solar wavelengths
+"""
+def simplePSF(wavelengths, values, center_wave, solar_waves):
+    #find index of maximum in values
+    max = np.where(values == max(values))
+    peak_wave = wavelengths[max]
+    #take difference between where center wave and maximum of vals
+    shift = np.subtract(peak_wave, center_wave)
+    #add or subtract the same difference from the wavelengths array
+    new_waves = wavelengths - shift
+    
+    w = np.where(solar_waves<=max(new_waves) and solar_waves>=min(new_waves))
+    new_values = np.interp(solar_waves[w], wavelengths, values)
+    
+    return solar_waves[w], new_values
+
+"""
+Function to calculate convolution of the distance adjusted solar spectrum onto a point spread function
+Parameters: 
+    spectra_at_target - distance adjusted solar spectrum
+    wavelengths - solar wavelengths
+    target - user input
+    user_waves - optional: user can specify their own point spread function-array of wavelengths
+    user_vals - optional: user can specify their own point spread function-array of numbers
+"""
+def getConvolvedSolarSpectrum(spectra_at_target, wavelengths, target, user_waves=None, user_vals=None): 
     from salsa.GetKernels import getMissionFromTarget
     from bisect import bisect
-    #get mission name
-    mission = getMissionFromTarget(target)
-    if mission is 'CASSINI':
-#        these are the cassini uvis coefficients
-        coeffs = np.array([0.0, 0.318, 121.569, 0.149, 0.00373, 1.507])
-        #create array for convolved spectrum
-        convolved_spectrum = np.zeros(shape=(len(wavelengths),))
+    
+    if user_waves is not None and user_vals is not None:
+        convolved_spectrum = np.zeros(shape=(len(wavelengths)))
         for i,wave in zip(range(0,len(wavelengths)),wavelengths):
-            coeffs[2]=wave
-            #get point spread function
-            psf = getPSF(coeffs, wavelengths,mission)
-            psf = psf/np.sum(psf)
-            #perform convolution
-            convolved_spectrum[i] = np.sum(spectra_at_target*psf)
-
-    elif mission is 'MAVEN':
-#        these are the maven iuvs coefficients
-        coeffs = np.array([0.295565,2.15489,3.00259,1.97700,-0.00239266])
-        #create wavelength array 
-        waves = np.linspace(110, 190, len(wavelengths), dtype=np.double)
-        for i,wave in zip(range(0,len(wavelengths)),waves):
-            #search new wavelength array for the wavelength that you want - the indices are the pixel and what should be passed into psf
-            ind = bisect(waves, wave, hi=len(waves)-1)
-            center_wave = min(waves[ind], waves[ind-1],key=lambda x: abs(x - wave))
-            pix = list(waves).index(center_wave)
-            #get point spread function
-            psf = getPSF(coeffs, pix, mission)
-            psf = psf[:,0]
-            #perform convolution
-            convolved_spectrum[i] = np.mean(spectra_at_target[pix-50:pix+50]*psf)
+            center_wave = wave
+            psf_waves, psf_vals = simplePSF(user_waves, user_vals, center_wave, wavelengths)
+            w = np.where(wavelengths<=max(psf_waves) and wavelengths>=min(psf_waves))
+            psf = psf_vals/np.sum(psf_vals)
+            convolved_spectrum[i] = np.sum(spectra_at_target[w]*psf)
+    else:
+        #get mission name
+        mission = getMissionFromTarget(target)
+        if mission is 'CASSINI':
+    #        these are the cassini uvis coefficients
+            coeffs = np.array([0.0, 0.318, 121.569, 0.149, 0.00373, 1.507])
+            #create array for convolved spectrum
+            convolved_spectrum = np.zeros(shape=(len(wavelengths),))
+            for i,wave in zip(range(0,len(wavelengths)),wavelengths):
+                coeffs[2]=wave
+                #get point spread function
+                psf = getPSF(coeffs, wavelengths,mission)
+                psf = psf/np.sum(psf)
+                #perform convolution
+                convolved_spectrum[i] = np.sum(spectra_at_target*psf)
+    
+        elif mission is 'MAVEN':
+    #        these are the maven iuvs coefficients
+            coeffs = np.array([0.295565,2.15489,3.00259,1.97700,-0.00239266])
+            #create wavelength array 
+            waves = np.linspace(110, 190, len(wavelengths), dtype=np.double)
+            for i,wave in zip(range(0,len(wavelengths)),waves):
+                #search new wavelength array for the wavelength that you want - the indices are the pixel and what should be passed into psf
+                ind = bisect(waves, wave, hi=len(waves)-1)
+                center_wave = min(waves[ind], waves[ind-1],key=lambda x: abs(x - wave))
+                pix = list(waves).index(center_wave)
+                #get point spread function
+                psf = getPSF(coeffs, pix, mission)
+                psf = psf[:,0]
+                #perform convolution
+                convolved_spectrum[i] = np.mean(spectra_at_target[pix-50:pix+50]*psf)  
+    #plot convolved spectrum     
+    plotConvolvedSpectrum(spectra_at_target, convolved_spectrum, wavelengths)           
          
     return convolved_spectrum
 """
-CITE CASSINI UVIS IDL CODE IN GITHUB - CUBE GENERATOR
+This function was written and developed by the Cassini UVIS processing team. 
+The source code can be found at https://github.com/Cassini-UVIS/tools
 """
 def cassini_uvis_fuv_wavelengths(xbin):
     RAD=180./3.1415926
@@ -193,12 +232,18 @@ def cassini_uvis_fuv_wavelengths(xbin):
         e_wavelength[k]=np.sum(lam[k*xbin:(k+1)*xbin])/xbin
     
     return e_wavelength
-
+"""
+Function to get planetary data from FITS file data cube and plot reflectance of data based on solar data
+Parameters: 
+    filename - FITS file of planetary data
+    solar_spectrum - distance adjusted and convolved solar spectrum
+    wavelengths_sol - solar wavelengths
+"""
 def getPlanetaryData(filename, solar_spectrum, wavelengths_sol):
     from astropy.io import fits
     from astropy import units as u
     #read fits file
-    hdu = fits.open(filename)
+    hdu = fits.open(os.getcwd()+'/salsa/'+filename)
     #get data
     data = hdu[3].data['UVIS']
     ring = hdu[3].data['CENTER_RING_PLANE_RADII']
@@ -229,14 +274,21 @@ def getPlanetaryData(filename, solar_spectrum, wavelengths_sol):
                 counter += 1
                 
     avg = array/counter
-    plt.plot(wavelengths_ob, avg, color = 'g')
+    
+    #plot the ratio
+    plt.plot(wavelengths_ob, avg, color = 'c')
     plt.title("Reflectance of Saturn's B-ring", fontsize=20)
-    plt.ylabel('[ I / F ]')
-    plt.xlabel('Wavelength (nm)')
+    plt.ylabel('( I / F )', fontsize=17)
+    plt.xlabel('Wavelength (nm)', fontsize=17)
     plt.show()
 
     return(data, wavelengths_ob)
-
+"""
+Function to convert units of planetary data in kR/Angstrom to the units of solar data in W/m^2/nm
+Parameters: 
+    irrad - intensity or flux of data
+    wavelengths - planetary data wavelengths
+"""
 def unitConversion(irr, wavelengths):
     from astropy import units as u, constants as const
     #get plancks const and speed of light
@@ -250,30 +302,32 @@ def unitConversion(irr, wavelengths):
     irradiance = irr*( 10**14*E/(4*np.pi))
     return(irradiance)
 
+"""
+Function to do ratio of solar data to planetary data - value known as reflectance of the planet
+Parameters: 
+    solar_spectrum - distance adjusted and convolved solar spectrum
+    planetary_spectrum - planetary data irradiance (flux)
+    wavelengths_sol - solar wavelengths
+    wavelengths_ob - planetary wavelengths
+"""
 def getPlanetaryReflectance(solar_spectrum, planetary_spectrum, wavelengths_sol, wavelengths_ob, x, y):
 
     solar_spectrum = np.interp(wavelengths_ob, wavelengths_sol[:,0], solar_spectrum)
-    
     #do ratio
     reflectance = planetary_spectrum/solar_spectrum
     
-#     plt.plot(wavelengths_ob, planetary_spectrum, color = 'g')
-#     plt.plot(wavelengths_ob, solar_spectrum, color = 'y')
-#     plt.ylabel('I / F')
-#     plt.xlabel('Wavelength (nm)')
-#     plt.title('Reflectance at Pixel Coordinates: {},{}'.format(x,y))
-#     plt.show()
-    
     return reflectance
 
+'''
+Function to plot the convolved solar spectrum 
+    -overplotted with the distance adjusted solar spectrum
+'''
 def plotConvolvedSpectrum(spectra, convolved_spectrum, wavelengths):
     
-    plt.plot(wavelengths,spectra, color='k', label = 'Normal')
-    plt.plot(wavelengths,convolved_spectrum, color = 'y', label = 'Convolved')
+    plt.plot(wavelengths,spectra, color = 'y',label = 'Normal')
+    plt.plot(wavelengths,convolved_spectrum, color = 'k', label = 'Convolved')
     plt.legend(loc='upper right')
-    plt.xlabel('Wavelength (nm)')
-    plt.ylabel('Irradiance (W/m^2/nm)')
+    plt.xlabel('Wavelength (nm)',fontsize=17)
+    plt.ylabel('Irradiance (W/m^2/nm)',fontsize=17)
     plt.title('Solstice Spectra Convolved onto Cassini UVIS Point Spread Function', fontsize=20)
     plt.show()
-    
-

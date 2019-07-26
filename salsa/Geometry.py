@@ -1,14 +1,7 @@
 """ AUTHOR: Emma Lieb
     
-    This file contains functions for computing all necessary geometry to be used for spectra convulution
+    This file contains functions for computing all necessary geometry to be used for spectra convolution
 """
-#***********************GEOMETRY FUNCTIONS************************************
-'''Function to get the vector position from space craft to planet
-Parameters:  
-    ET - seconds calculated from time conversion functions above
-    target - user input
-'''
-
 import importlib
 import os
 
@@ -30,6 +23,11 @@ def makeUnitVector(vector):
     
     return rtn_vector
 
+'''Function to get the vector position from the spacecraft to the center of the target
+Parameters:  
+    ET - ephemeris seconds calculated from time conversion functions above
+    target - user input
+'''
 def getVectorFromSpaceCraftToTarget(time, target):
     from salsa.TimeConversions import UTC2ET
     from salsa.GetKernels import getMissionFromTarget, getKernels
@@ -40,14 +38,6 @@ def getVectorFromSpaceCraftToTarget(time, target):
     metakernel = getKernels(mission, target,'getVectorFromSpaceCraftToTarget', time) 
     #load kernels
     spice.furnsh(metakernel)
-    """
-    NOTE ON ABBERATION CORRECTION FACTORS: NONE, LT and LT+S. None gives geometric position of the target body relative to
-    the observer. LT returns vector corresponds to the position of the target at the moment it emitted photons arriving at the observer at `et'
-    LT+S returns a vector that takes into account the observer's velocity relative to the solar system barycenter. 
-     
-    Thinking that LT+S may be the way to go. 
-    """
-
     #second position vector is using target as stationary reference frame -- includes velocity of space craft
     target = target.upper()
     frame = 'IAU_'+ target.upper()
@@ -64,9 +54,6 @@ def getVectorFromSpaceCraftToTarget(time, target):
     Z = state[2]
     
     pos_vector = np.array([X,Y,Z])
-    
-#     #need position vector to calculate distance vector in order to calculate true distance
-#     getVectorFromSpaceCraftToSun(ET, target, pos_vector)
     
     print('Apparent state of '+target+' as seen from '+mission+' in the '+frame+' fixed-body frame (km):')
     print('x_pos = {:16.3f}'.format(state[0]))
@@ -110,11 +97,7 @@ def getVectorFromSpaceCraftToSun(time, target, pos_vector):
     sunDir_vector = np.array([X,Y,Z])
     
     distance_vector = sunDir_vector+pos_vector
-    
-    #need target to sun vector for angular separation function and distance function
-#     getAngularSeparation(ET, target, distance_vector)
-#     getTargetSunDistance(distance_vector)
-    
+
     print('Apparent direction of '+target+' as seen from the Sun in the '+frame+' fixed-body frame (km):')
     print('x_dir = {:16.3f}'.format(sundirection[0]))
     print('y_dir = {:16.3f}'.format(sundirection[1]))
@@ -167,9 +150,6 @@ def getVelocityVectorOfSpaceCraft(time, target):
     vZ = state[5]
     
     vel_vector = np.array([vX,vY,vZ])
-    
-    #need position vector to calculate distance vector in order to calculate true distance
-    #getVectorFromSpaceCraftToSun(ET, target, pos_vector)
     
     print('Apparent state of '+target+' as seen from '+mission+' in the '+frame+' fixed-body frame (km/s):')
     print('x_vel = {:16.3f}'.format(state[3]))
